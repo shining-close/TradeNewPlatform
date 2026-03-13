@@ -1,0 +1,52 @@
+/* 顶部信息栏 */
+.top-bar {
+    border-bottom: 1px solid #e0e0e0;
+}
+.site-title h1 {
+    letter-spacing: 1px;
+}
+/* 导航栏样式 - 匹配示例蓝色 */
+.navbar.bg-primary {
+    background-color: #2b57af !important;
+}
+/* 导航菜单 - 字体/间距优化 */
+.navbar-nav .nav-link {
+    font-size: 1.1rem;
+    padding: 0.8rem 0;
+    position: relative;
+}
+/* 导航选中态 */
+.navbar-nav .nav-link.active {
+    color: #fff !important;
+    font-weight: bold;
+    border-bottom: 2px solid #fff;
+}
+/* 导航hover效果 */
+.navbar-nav .nav-link:hover {
+    color: #f0f0f0 !important;
+}
+/* 移动端适配 */
+@media (max-width: 992px) {
+    .navbar-nav.gap-5 {
+        gap: 0 !important;
+    }
+    .navbar-nav .nav-item {
+        padding: 0.5rem 0;
+    }
+    .navbar-nav .nav-link.active {
+        border-bottom: none;
+    }
+}
+
+
+/* ----------------------index------------------- */
+/* 订单标题样式 - 首页供需订单 【提升优先级】 */
+a.list-group-item-action .order-title {
+    color: #212529 !important; /* 默认黑色，!important 强制生效 */
+    text-decoration: none !important;
+}
+/* 鼠标悬浮时标题变蓝色 【提升优先级】 */
+a.list-group-item-action:hover .order-title {
+    color: #2b57af !important; /* 建议用你导航栏的主蓝色 #2b57af，全站色调统一 */
+    text-decoration: underline !important; /* 可选，不需要可删 */
+}
