@@ -1,0 +1,83 @@
+{% extends 'administrator/base.html' %}
+{% block title %}修改物流 - 管理后台{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">修改物流：{{ transport.name }}</h4>
+        <a href="{% url 'administrator:transport_manage' %}" class="btn btn-sm btn-secondary">返回列表</a>
+    </div>
+    <div class="card-body">
+        <!-- ✅ 关键：添加 enctype="multipart/form-data" 支持图片上传 -->
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">物流名称 <span class="text-danger">*</span></label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="text-danger mt-1">{{ form.name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">物流类型</label>
+                    {{ form.type }}
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">参考价格</label>
+                    {{ form.price }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">时效</label>
+                    {{ form.time }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">物流公司</label>
+                {{ form.company }}
+            </div>
+
+            <!-- 描述字段 -->
+<!-- 描述字段部分修改 -->
+<div class="mb-3">
+    <label class="form-label">物流描述 <span class="text-muted">(最多500字)</span></label>
+    {{ form.description }}
+    <!-- 字数统计显示 -->
+    <div class="mt-1">
+        <span id="char-count" class="text-muted">0/500</span>
+    </div>
+</div>
+
+        <!-- 图片字段部分修改 -->
+<div class="mb-3">
+    <label class="form-label">物流图片</label>
+    {{ form.image }}
+    <!-- 图片校验错误提示 -->
+    {% if form.image.errors %}
+        <div class="text-danger mt-1">
+            {{ form.image.errors.0 }}
+        </div>
+    {% endif %}
+    <div class="form-text mt-1">支持JPG/PNG格式，大小≤2MB，建议尺寸：800x400</div>
+
+                <!-- 预览当前图片 -->
+                {% if transport.image %}
+                <div class="mt-2">
+                    <img src="{{ transport.image.url }}" style="max-width: 300px; border: 1px solid #eee; padding: 5px;" alt="当前图片">
+                </div>
+                {% endif %}
+</div>
+
+
+            <div class="d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">保存修改</button>
+                <a href="{% url 'administrator:transport_manage' %}" class="btn btn-secondary">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

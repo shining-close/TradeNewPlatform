@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if flag == '2' %}采购需求{% else %}供应信息{% endif %} - 中俄贸易平台{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题 -->
+    <div class="bg-primary text-white py-4 mb-4 text-center">
+        <h2 class="mb-0">{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}</h2>
+    </div>
+
+    <!-- 切换/发布按钮 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <a href="{% url 'trade:order_list' %}?flag=1" class="btn {% if flag == '1' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                        供应信息
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'trade:order_list' %}?flag=2" class="btn {% if flag == '2' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                        采购需求
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'trade:order_create' %}?flag={{ flag }}" class="btn btn-success w-100">
+                        发布{% if flag == '1' %}供应信息{% else %}采购需求{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 订单列表 -->
+    <div class="row g-4">
+        {% for order in orders %}
+        <div class="col-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title text-primary mb-0">{{ order.title }}</h5>
+                        {% if order.status == 'completed' %}
+                            <span class="badge bg-success">{{ order.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge bg-warning">{{ order.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="card-text mb-3">{{ order.content|truncatechars:200 }}</p>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge bg-info">{{ order.get_flag_display }}</span>
+                        <span class="badge bg-secondary">{{ order.category|default:"未分类" }}</span>
+                        <span class="badge bg-dark text-white">{{ order.create_time|date:"Y-m-d" }}</span>
+                        {% if order.end_time %}
+                        <span class="badge bg-danger">截止：{{ order.end_time|date:"Y-m-d" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">发布人：{{ order.user.username }}</span>
+
+                        <a href="{% url 'trade:order_detail' order.id %}" class="btn btn-sm btn-outline-primary">查看详情</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted fs-5">暂无{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}，快去发布第一条吧！</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 分页控件（核心：处理多页数据） -->
+{% if orders.paginator.num_pages > 1 %}
+<nav class="mt-5" aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <!-- 上一页 -->
+        <li class="page-item {% if not orders.has_previous %}disabled{% endif %}">
+            {% if orders.has_previous %}
+                <a class="page-link" href="?flag={{ flag }}&page={{ orders.previous_page_number }}" tabindex="-1">
+                    上一页
+                </a>
+            {% else %}
+                <span class="page-link" tabindex="-1">上一页</span>
+            {% endif %}
+        </li>
+
+        <!-- 页码 -->
+        {% for num in orders.paginator.page_range %}
+            {% if num >= orders.number|add:-2 and num <= orders.number|add:2 %}
+                <li class="page-item {% if num == orders.number %}active{% endif %}">
+                    <a class="page-link" href="?flag={{ flag }}&page={{ num }}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        <!-- 下一页 -->
+        <li class="page-item {% if not orders.has_next %}disabled{% endif %}">
+            {% if orders.has_next %}
+                <a class="page-link" href="?flag={{ flag }}&page={{ orders.next_page_number }}">
+                    下一页
+                </a>
+            {% else %}
+                <span class="page-link">下一页</span>
+            {% endif %}
+        </li>
+    </ul>
+    <div class="text-center mt-2 text-muted">
+        共 {{ orders.paginator.count }} 条记录，当前第 {{ orders.number }} 页 / 共 {{ orders.paginator.num_pages }} 页
+    </div>
+</nav>
+{% endif %}
+
+
+</div>
+{% endblock %}

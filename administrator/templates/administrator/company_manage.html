@@ -1,0 +1,108 @@
+{% extends 'administrator/base.html' %}
+{% block title %}公司管理 - 管理后台{% endblock %}
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <h4 class="mb-0">公司管理</h4>
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <!-- 搜索框 -->
+            <form method="get" class="d-flex gap-1">
+                <input type="text" name="keyword" class="form-control form-control-sm" 
+                       placeholder="搜索公司名称" value="{{ current_keyword }}">
+                <button type="submit" class="btn btn-sm btn-primary">搜索</button>
+                {% if current_keyword %}
+                    <a href="{% url 'administrator:company_manage' %}" class="btn btn-sm btn-outline-secondary">清空</a>
+                {% endif %}
+            </form>
+            <!-- 新增按钮 -->
+            <a href="{% url 'administrator:company_add' %}" class="btn btn-sm btn-primary">+ 新增公司</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>公司名称</th>
+                        <th>联系电话</th>
+                        <th>联系人</th>
+                        <th>合作物流</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in companies %}
+                    <tr>
+                        <td>{{ company.id }}</td>
+                        <td>
+                            <a href="{% url 'administrator:company_detail' company.id %}" class="text-primary fw-bold">
+                                {{ company.name }}
+                            </a>
+                        </td>
+                        <td>{{ company.phone }}</td>
+                        <td>{{ company.contact_person|default:"-" }}</td>
+                        <td>{{ company.transport|default:"-" }}</td>
+                        <td>{{ company.create_time|date:"Y-m-d" }}</td>
+                        <td class="d-flex gap-2">
+                            <a href="{% url 'administrator:company_edit' company.id %}" class="btn btn-sm btn-outline-primary">修改</a>
+                            <a href="{% url 'administrator:company_delete' company.id %}" class="btn btn-sm btn-danger" 
+                               onclick="return confirm('确定删除「{{ company.name }}」？删除后不可恢复！')">删除</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-3">
+                            {% if current_keyword %}未找到匹配的公司{% else %}暂无公司数据{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页控件 -->
+        {% if paginator.num_pages > 1 %}
+        <nav aria-label="公司分页" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not companies.has_previous %}disabled{% endif %}">
+                    {% if companies.has_previous %}
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ companies.previous_page_number }}">上一页</a>
+                    {% else %}
+                        <span class="page-link">上一页</span>
+                    {% endif %}
+                </li>
+                {% for num in companies.paginator.page_range %}
+                    {% if num >= companies.number|add:-2 and num <= companies.number|add:2 %}
+                        <li class="page-item {% if num == companies.number %}active{% endif %}">
+                            <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not companies.has_next %}disabled{% endif %}">
+                    {% if companies.has_next %}
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ companies.next_page_number }}">下一页</a>
+                    {% else %}
+                        <span class="page-link">下一页</span>
+                    {% endif %}
+                </li>
+            </ul>
+            <div class="text-center mt-2 text-muted">
+                共 {{ paginator.count }} 家公司，当前第 {{ companies.number }} 页/共 {{ paginator.num_pages }} 页
+            </div>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 回车搜索脚本 -->
+<script>
+document.querySelector('input[name="keyword"]')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        this.form.submit();
+    }
+});
+</script>
+{% endblock %}

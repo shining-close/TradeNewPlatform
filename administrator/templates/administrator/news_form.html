@@ -1,0 +1,79 @@
+{% extends 'administrator/base.html' %}
+{% block title %}
+    {% if is_edit %}修改资讯{% else %}新增资讯{% endif %} - 管理后台
+{% endblock %}
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h4 class="mb-0">
+            {% if is_edit %}修改资讯（ID：{{ news.id }}）{% else %}新增资讯{% endif %}
+        </h4>
+    </div>
+    <div class="card-body">
+        <!-- 必须加 enctype="multipart/form-data" 才能上传文件 -->
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            <div class="col-12">
+                <label class="form-label">标题 <span class="text-danger">*</span></label>
+                <input type="text" name="title" class="form-control" required
+                       value="{% if is_edit %}{{ news.title }}{% endif %}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">分类 <span class="text-danger">*</span></label>
+                <select name="category" class="form-select" required>
+                    <option value="">请选择分类</option>
+                    {% for k, v in category_choices %}
+                    <option value="{{ k }}" {% if is_edit and news.category == k %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">封面图（可选）</label>
+                <input type="file" name="image" class="form-control" accept="image/*">
+                {% if is_edit and news.image %}
+                <div class="mt-2">
+                    <span class="form-text text-muted">现有封面：</span>
+                    <img src="{{ news.image.url }}" style="width: 80px; height: 80px; object-fit: cover;" alt="封面图">
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-12">
+                <label class="form-label">内容 <span class="text-danger">*</span></label>
+                <textarea name="content" id="news-content" class="form-control" rows="8" required
+                          maxlength="1000" oninput="updateWordCount()">{% if is_edit %}{{ news.content }}{% endif %}</textarea>
+                <div class="form-text text-end">
+                    <span id="word-count">{% if is_edit %}{{ news.content|length }}{% else %}0{% endif %}</span>/1000 字
+                </div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    {% if is_edit %}保存修改{% else %}新增资讯{% endif %}
+                </button>
+                <a href="{% url 'administrator:news_manage' %}" class="btn btn-secondary ms-2">取消返回</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// 实时统计字数并限制
+function updateWordCount() {
+    const content = document.getElementById('news-content');
+    const count = document.getElementById('word-count');
+    const maxLength = 1000;
+    let currentLength = content.value.length;
+
+    // 超出时截断
+    if (currentLength > maxLength) {
+        content.value = content.value.substring(0, maxLength);
+        currentLength = maxLength;
+    }
+    count.textContent = currentLength;
+}
+
+// 页面加载时初始化字数统计
+window.onload = function() {
+    updateWordCount();
+};
+</script>
+{% endblock %}

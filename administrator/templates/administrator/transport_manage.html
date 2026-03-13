@@ -1,0 +1,110 @@
+{% extends 'administrator/base.html' %}
+{% block title %}物流管理 - 管理后台{% endblock %}
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <h4 class="mb-0">物流信息管理</h4>
+        <!-- 搜索框 + 添加物流按钮（适配响应式，小屏幕自动换行） -->
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <!-- 新增：物流名称关键字搜索 -->
+            <form method="get" class="d-flex gap-1">
+                <input type="text" name="keyword" class="form-control form-control-sm"
+                       placeholder="输入物流名称搜索" value="{{ current_keyword }}">
+                <button type="submit" class="btn btn-sm btn-primary">搜索</button>
+                {% if current_keyword %}
+                    <a href="{% url 'administrator:transport_manage' %}" class="btn btn-sm btn-outline-secondary">清空</a>
+                {% endif %}
+            </form>
+            <!-- 原有添加物流按钮 -->
+            <a href="{% url 'administrator:transport_add' %}" class="btn btn-sm btn-primary">+ 添加物流</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>物流名称</th>
+                        <th>类型</th>
+                        <th>参考价格</th>
+                        <th>时效</th>
+                        <th>物流公司</th>
+                        <th>录入用户</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transports %}
+                    <tr>
+                        <td>{{ t.id }}</td>
+                        <td>{{ t.name }}</td>
+                        <td>{{ t.type|default:"-" }}</td>
+                        <td>{{ t.price|default:"-" }}</td>
+                        <td>{{ t.time|default:"-" }}</td>
+                        <td>{{ t.company|default:"-" }}</td>
+                        <td>{{ t.user.username }}</td>
+                        <td>{{ t.create_time|date:"Y-m-d H:i" }}</td>
+                        <td class="d-flex gap-2">
+                            <a href="{% url 'administrator:transport_edit' t.id %}" class="btn btn-sm btn-primary">编辑</a>
+                            <a href="{% url 'administrator:transport_delete' t.id %}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('确定删除？')">删除</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-3">
+                            {% if current_keyword %}
+                                未找到包含「{{ current_keyword }}」的物流信息
+                            {% else %}
+                                暂无物流数据
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 新增：分页控件（修复EmptyPage，禁用状态无链接，与搜索联动） -->
+        {% if paginator.num_pages > 1 %}
+        <nav aria-label="物流分页" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- 上一页：禁用状态用span，避免无效链接 -->
+                <li class="page-item {% if not transports.has_previous %}disabled{% endif %}">
+                    {% if transports.has_previous %}
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ transports.previous_page_number }}">上一页</a>
+                    {% else %}
+                        <span class="page-link">上一页</span>
+                    {% endif %}
+                </li>
+
+                <!-- 页码：仅显示当前页前后2页，最多5个页码，避免拥挤 -->
+                {% for num in transports.paginator.page_range %}
+                    {% if num >= transports.number|add:-2 and num <= transports.number|add:2 %}
+                        <li class="page-item {% if num == transports.number %}active{% endif %}">
+                            <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- 下一页：禁用状态用span -->
+                <li class="page-item {% if not transports.has_next %}disabled{% endif %}">
+                    {% if transports.has_next %}
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ transports.next_page_number }}">下一页</a>
+                    {% else %}
+                        <span class="page-link">下一页</span>
+                    {% endif %}
+                </li>
+            </ul>
+            <!-- 分页信息提示 -->
+            <div class="text-center mt-2 text-muted">
+                共 {{ paginator.count }} 条物流信息，当前第 {{ transports.number }} 页/共 {{ paginator.num_pages }} 页
+            </div>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

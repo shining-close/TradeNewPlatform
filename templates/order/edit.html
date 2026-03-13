@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}编辑{% if flag == '1' %}供应信息{% else %}采购需求{% endif %} - 中俄贸易平台{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题 -->
+    <div class="bg-primary text-white py-4 mb-4 text-center">
+        <h2 class="mb-0">编辑{% if flag == '1' %}供应信息{% else %}采购需求{% endif %}</h2>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- 标题 -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">
+                                {% if flag == '1' %}供应信息标题{% else %}采购需求标题{% endif %} 
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="{{ order.title }}" required>
+                        </div>
+
+
+                    <!-- 新增：订单图片上传+预览 -->
+<div class="mb-3">
+    <label class="form-label">订单图片（可选）</label>
+    <!-- 图片预览 -->
+    {% if order.image %}
+        <div class="mb-2">
+            <img src="{{ order.image.url }}" alt="订单图片"
+                 style="max-width: 300px; max-height: 200px; border: 1px solid #dee2e6;">
+        </div>
+        <div class="form-text mb-2">重新上传将覆盖原有图片</div>
+    {% endif %}
+    <!-- 上传按钮 -->
+    <input type="file" class="form-control" id="image" name="image" accept="image/*">
+</div>
+                        
+                        <!-- 分类 -->
+                        <div class="mb-3">
+                            <label for="category" class="form-label">行业分类</label>
+                            <input type="text" class="form-control" id="category" name="category" 
+                                   value="{{ order.category|default:'' }}"
+                                   placeholder="{% if flag == '1' %}例如：农产品/机械设备（供应）{% else %}例如：电子产品/化工品（采购）{% endif %}">
+                        </div>
+                        
+                        <!-- 状态（仅发布者可改） -->
+                        <div class="mb-3">
+                            <label for="status" class="form-label">订单状态</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>待处理</option>
+                                <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>处理中</option>
+                                <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>已完成</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 详细内容 -->
+                        <div class="mb-3">
+                            <label for="content" class="form-label">
+                                {% if flag == '1' %}供应详情{% else %}采购详情{% endif %} 
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="content" name="content" rows="6" required>
+                                {{ order.content }}
+                            </textarea>
+                        </div>
+                        
+                        <!-- 截止时间 -->
+                        <div class="mb-3">
+                            <label for="end_time" class="form-label">截止时间</label>
+                            <input type="datetime-local" class="form-control" id="end_time" name="end_time"
+                                   value="{{ order.end_time|date:'Y-m-d\TH:i'|default:'' }}">
+                        </div>
+                        
+                        <!-- 关联物流 -->
+                        <div class="mb-3">
+                            <label for="transport" class="form-label">关联物流方案</label>
+                            <select class="form-select" id="transport" name="transport">
+                                <option value="">不关联物流</option>
+                                {% for t in transports %}
+                                    <option value="{{ t.id }}" {% if order.transport.id == t.id %}selected{% endif %}>
+                                        {{ t.name }}（{{ t.transport_type }}）
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- 提交按钮 -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'trade:order_detail' order.id %}" class="btn btn-outline-secondary flex-fill">
+                                    取消返回详情
+                                </a>
+                                <a href="{% url 'trade:order_list' %}?flag={{ flag }}" class="btn btn-outline-primary flex-fill">
+                                    返回列表
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

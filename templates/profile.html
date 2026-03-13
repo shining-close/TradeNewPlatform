@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}个人中心 - {{ user.username }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题 -->
+    <div class="bg-primary text-white py-4 mb-4 text-center">
+        <h2 class="mb-0">个人中心</h2>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <!-- 提示消息 -->
+                    {% if messages %}
+                        {% for msg in messages %}
+                            <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+                                {{ msg }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <form method="post" enctype="multipart/form-data">  <!-- 关键：添加 enctype 支持文件上传 -->
+                        {% csrf_token %}
+                        <!-- 头像上传区域 -->
+                        <div class="mb-4 text-center">
+                            <h5 class="mb-3">用户头像</h5>
+                            <!-- 原有头像展示 -->
+                            <div class="mb-3">
+                                <img id="current-avatar"
+                                     src="{{ media_url }}{{ user.avatar }}"
+                                     alt="用户头像"
+                                     class="rounded-circle"
+                                     style="width: 120px; height: 120px; object-fit: cover; border: 2px solid #dee2e6;">
+                            </div>
+                            <!-- 新增：头像预览区域（默认隐藏，和原有头像样式一致） -->
+                            <div id="avatar-preview-box" class="mb-3" style="display: none;">
+                                <p class="form-text mb-2">头像预览</p>
+                                <img id="avatar-preview"
+                                     src=""
+                                     alt="头像预览"
+                                     class="rounded-circle"
+                                     style="width: 120px; height: 120px; object-fit: cover; border: 2px solid #0d6efd;">
+                            </div>
+                            <!-- 头像上传按钮 -->
+                            <div class="mb-3">
+                                <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
+                                <div class="form-text">支持 jpg/png 格式，建议尺寸 120x120px</div>
+                            </div>
+                        </div>
+                        <!-- 用户名（只读） -->
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                            <div class="form-text">用户名不可修改</div>
+                        </div>
+                        <!-- 角色（只读） -->
+                        <div class="mb-3">
+                            <label class="form-label">角色</label>
+                            <input type="text" class="form-control" value="{{ user.get_role_display }}" readonly>
+                            {% if user.role == 'enterprise' %}
+                                <div class="form-text">
+                                    企业用户状态：
+                                    {% if user.is_audited %}
+                                        <span class="badge bg-success">已审核</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">待审核</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <!-- 手机号 -->
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">手机号</label>
+                            <input type="text" class="form-control" id="phone" name="phone"
+                                   value="{{ user.phone|default:'' }}" placeholder="请输入手机号">
+                        </div>
+                        <!-- 所属公司 -->
+                        <div class="mb-3">
+                            <label for="company" class="form-label">所属公司</label>
+                            <input type="text" class="form-control" id="company" name="company"
+                                   value="{{ user.company|default:'' }}" placeholder="请输入所属公司">
+                        </div>
+                        <!-- 职位 -->
+                        <div class="mb-3">
+                            <label for="position" class="form-label">职位</label>
+                            <input type="text" class="form-control" id="position" name="position"
+                                   value="{{ user.position|default:'' }}" placeholder="请输入职位">
+                        </div>
+                        <!-- 提交按钮 -->
+<div class="d-grid gap-2">
+    <!-- ✅ 新增：通知中心入口 -->
+    <a href="{% url 'trade:notification_center' %}" class="btn btn-info">
+        通知中心 <span class="badge bg-light text-dark">{{ unread_notification_count }}</span>
+    </a>
+    <button type="submit" class="btn btn-primary">保存修改</button>
+    <a href="{% url 'trade:index' %}" class="btn btn-outline-secondary">返回首页</a>
+</div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 1. 引入jQuery（CDN方式，无需本地下载，放在body末尾） -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<!-- 2. 头像上传预览核心jQuery代码 -->
+<script>
+$(document).ready(function() {
+    // 监听文件选择框的变化（选择/取消图片时触发）
+    $('#avatar').change(function(e) {
+        // 获取选择的文件
+        const file = e.target.files[0];
+        // 判断：是否选择了文件 + 文件是否为图片类型
+        if (file && file.type.startsWith('image/')) {
+            // 创建FileReader对象，用于读取图片文件
+            const reader = new FileReader();
+            // 图片读取完成后执行的回调
+            reader.onload = function(e) {
+                // 显示预览区域
+                $('#avatar-preview-box').show();
+                // 将读取的图片Base64地址赋值给预览图
+                $('#avatar-preview').attr('src', e.target.result);
+            };
+            // 以Base64格式读取图片文件（适配预览）
+            reader.readAsDataURL(file);
+        } else {
+            // 未选择文件/选择非图片/取消选择 → 隐藏预览区域
+            $('#avatar-preview-box').hide();
+        }
+    });
+});
+</script>
+{% endblock %}

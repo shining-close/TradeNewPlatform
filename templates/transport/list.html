@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}国际物流 - 中俄贸易供需服务平台{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题栏 -->
+    <div class="bg-primary text-white py-4 mb-4 text-center">
+        <h2 class="mb-0">国际物流</h2>
+    </div>
+
+    <!-- 物流服务介绍 -->
+    <div class="alert alert-info mb-4">
+        <h5>📦 物流服务说明</h5>
+        <p class="mb-0">我们提供中俄之间的全链路物流解决方案，覆盖海运、空运、陆运，助力企业高效、安全地完成跨境货物运输。</p>
+    </div>
+
+    <!-- 物流方案列表 -->
+    <div class="row g-4">
+        {% for transport in transports %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">{{ transport.name }}</h5>
+                    <p class="card-text text-muted">{{ transport.description|default:"暂无描述" }}</p>
+                    <ul class="list-unstyled mb-3">
+                        <li><strong>时效：</strong>{{ transport.delivery_time|default:"7-15天" }}</li>
+                        <li><strong>价格：</strong>{{ transport.price|default:"￥XX/公斤" }}</li>
+                        <li><strong>适用范围：</strong>{{ transport.scope|default:"中俄全境" }}</li>
+                    </ul>
+                    <a href="#" class="btn btn-sm btn-outline-primary w-100">查看详情</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted">暂无可用物流方案，敬请期待！</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

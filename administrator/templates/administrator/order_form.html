@@ -1,0 +1,108 @@
+{% extends 'administrator/base.html' %}
+{% block title %}
+    {% if is_edit %}修改订单 - 管理后台{% else %}新增订单 - 管理后台{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h4 class="mb-0">
+            {% if is_edit %}修改订单（ID：{{ order.id }}）{% else %}新增订单{% endif %}
+        </h4>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            <!-- 标题/类型/状态/分类 -->
+            <div class="col-md-4">
+                <label class="form-label">订单标题 <span class="text-danger">*</span></label>
+                <input type="text" name="title" class="form-control" required 
+                       value="{% if is_edit %}{{ order.title }}{% endif %}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">订单类型 <span class="text-danger">*</span></label>
+                <select name="flag" class="form-select" required>
+                    <option value="">请选择</option>
+                    <option value="1" {% if is_edit and order.flag == '1' %}selected{% endif %}>供应</option>
+                    <option value="2" {% if is_edit and order.flag == '2' %}selected{% endif %}>需求</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">订单状态 <span class="text-danger">*</span></label>
+                <select name="status" class="form-select" required>
+                    <option value="">请选择</option>
+                    <option value="completed" {% if is_edit and order.status == 'completed' %}selected{% endif %}>已完成</option>
+                    <option value="uncompleted" {% if is_edit and order.status == 'uncompleted' %}selected{% endif %}>未完成</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">行业分类</label>
+                <input type="text" name="category" class="form-control" 
+                       value="{% if is_edit %}{{ order.category|default:'' }}{% endif %}"
+                       placeholder="如：3C电子、农产品、美妆">
+            </div>
+
+            <!-- 发布人/物流/截止时间 -->
+            <div class="col-md-4">
+                <label class="form-label">发布人 <span class="text-danger">*</span></label>
+                <select name="user" class="form-select" required>
+                    <option value="">请选择用户</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if is_edit and order.user.id == user.id %}selected{% endif %}>
+                        {{ user.username }} ({{ user.get_role_display }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">关联物流</label>
+                <select name="transport" class="form-select">
+                    <option value="">无（不关联）</option>
+                    {% for trans in transports %}
+                    <option value="{{ trans.id }}" {% if is_edit and order.transport and order.transport.id == trans.id %}selected{% endif %}>
+                        {{ trans.name }} ({{ trans.type|default:'未知' }}) - {{ trans.time|default:'未知时效' }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">截止时间</label>
+                <input type="datetime-local" name="end_time" class="form-control"
+                       value="{% if is_edit and order.end_time %}{{ order.end_time|date:'Y-m-d\TH:i' }}{% endif %}">
+            </div>
+
+            <!-- 图片URL/本地上传 -->
+            <div class="col-md-6">
+                <label class="form-label">图片URL</label>
+                <input type="url" name="image_url" class="form-control"
+                       value="{% if is_edit %}{{ order.image_url|default:'' }}{% endif %}"
+                       placeholder="输入网络图片地址">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">本地上传图片</label>
+                <input type="file" name="image" class="form-control" accept="image/*">
+                {% if is_edit and order.image %}
+                <div class="mt-2">
+                    <span class="form-text text-muted">现有图片：</span>
+                    <img src="{{ order.image.url }}" style="width: 60px; height: 60px; object-fit: cover;" alt="现有订单图">
+                    <span class="text-danger ms-2">重新上传将覆盖</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 订单详情 -->
+            <div class="col-12">
+                <label class="form-label">订单详情 <span class="text-danger">*</span></label>
+                <textarea name="content" class="form-control" rows="5" required placeholder="输入订单详细信息：规格、数量、价格、交货要求等">{% if is_edit %}{{ order.content }}{% endif %}</textarea>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-primary">
+                    {% if is_edit %}保存修改{% else %}新增订单{% endif %}
+                </button>
+                <a href="{% url 'administrator:order_manage' %}" class="btn btn-secondary ms-2">取消返回</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

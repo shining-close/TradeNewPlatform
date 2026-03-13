@@ -1,0 +1,95 @@
+{% extends 'administrator/base.html' %}
+{% block title %}
+    {% if is_edit %}修改公司{% else %}新增公司{% endif %} - 管理后台
+{% endblock %}
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h4 class="mb-0">
+            {% if is_edit %}修改公司（{{ company.name }}）{% else %}新增公司{% endif %}
+        </h4>
+    </div>
+    <div class="card-body">
+        <!-- 关键：添加 enctype="multipart/form-data" 支持文件上传 -->
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            <div class="col-12">
+                <label class="form-label">公司名称 <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control" required
+                       value="{% if is_edit %}{{ company.name }}{% endif %}">
+            </div>
+            <div class="col-12">
+                <label class="form-label">公司地址 <span class="text-danger">*</span></label>
+                <input type="text" name="address" class="form-control" required
+                       value="{% if is_edit %}{{ company.address }}{% endif %}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">联系电话 <span class="text-danger">*</span></label>
+                <input type="text" name="phone" class="form-control" required
+                       value="{% if is_edit %}{{ company.phone }}{% endif %}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">联系人（可选）</label>
+                <input type="text" name="contact_person" class="form-control"
+                       value="{% if is_edit %}{{ company.contact_person|default:'' }}{% endif %}">
+            </div>
+            <div class="col-12">
+                <label class="form-label">合作物流（可选）</label>
+                <input type="text" name="transport" class="form-control"
+                       value="{% if is_edit %}{{ company.transport|default:'' }}{% endif %}">
+            </div>
+            <!-- 新增：公司简介（500字限制） -->
+            <div class="col-12">
+                <label class="form-label">公司简介（可选，最多500字）</label>
+                <textarea name="intro" id="company-intro" class="form-control" rows="5"
+                          maxlength="500" oninput="updateIntroCount()">
+                    {% if is_edit %}{{ company.intro|default:'' }}{% endif %}
+                </textarea>
+                <div class="form-text text-end">
+                    <span id="intro-count">{% if is_edit %}{{ company.intro|length }}{% else %}0{% endif %}</span>/500 字
+                </div>
+            </div>
+            <!-- 新增：公司图片上传 -->
+            <div class="col-12">
+                <label class="form-label">公司图片（可选）</label>
+                <input type="file" name="image" class="form-control" accept="image/*">
+                {% if is_edit and company.image %}
+                <div class="mt-2">
+                    <span class="form-text text-muted">当前图片：</span>
+                    <img src="{{ company.image.url }}" style="width: 120px; height: 120px; object-fit: cover;" alt="{{ company.name }}">
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    {% if is_edit %}保存修改{% else %}新增公司{% endif %}
+                </button>
+                <a href="{% url 'administrator:company_manage' %}" class="btn btn-secondary ms-2">取消返回</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 实时字数统计脚本 -->
+<script>
+// 公司简介字数统计+限制
+function updateIntroCount() {
+    const intro = document.getElementById('company-intro');
+    const count = document.getElementById('intro-count');
+    const maxLength = 500;
+    let currentLength = intro.value.length;
+
+    // 超出自动截断
+    if (currentLength > maxLength) {
+        intro.value = intro.value.substring(0, maxLength);
+        currentLength = maxLength;
+    }
+    count.textContent = currentLength;
+}
+
+// 页面加载初始化
+window.onload = function() {
+    updateIntroCount();
+};
+</script>
+{% endblock %}

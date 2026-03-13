@@ -1,0 +1,117 @@
+{% extends 'administrator/base.html' %}
+{% block title %}
+    {% if is_edit %}修改用户 - 管理后台{% else %}新增用户 - 管理后台{% endif %}
+{% endblock %}
+{% block content %}
+<!-- 与原有用户页一致的卡片样式，保持布局统一 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h4 class="mb-0">
+            {% if is_edit %}修改用户（ID：{{ user.id }}）{% else %}新增用户{% endif %}
+        </h4>
+    </div>
+    <div class="card-body">
+        <!-- 表单支持文件上传（头像），必须加enctype -->
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            <!-- 第一行：用户名、密码 -->
+            <div class="col-md-6">
+                <label class="form-label">用户名 <span class="text-danger">*</span></label>
+                <input type="text" name="username" class="form-control" required 
+                       value="{% if is_edit %}{{ user.username }}{% endif %}">
+                <div class="form-text">用户名唯一，不可重复</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">密码 
+                    <span class="text-danger">*</span>
+                    {% if is_edit %}<span class="text-muted">(不填则保留原有密码)</span>{% endif %}
+                </label>
+                <input type="password" name="password" class="form-control" {% if not is_edit %}required{% endif %}>
+                <div class="form-text">新增用户为必填，修改用户可选</div>
+            </div>
+
+            <!-- 第二行：手机号、用户角色 -->
+            <div class="col-md-6">
+                <label class="form-label">手机号</label>
+                <input type="text" name="phone" class="form-control" 
+                       value="{% if is_edit %}{{ user.phone|default:'' }}{% endif %}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">用户角色 <span class="text-danger">*</span></label>
+                <select name="role" class="form-select" required id="user-role">
+                    <option value="">请选择角色</option>
+                    {% for k, v in role_choices %}
+                    <option value="{{ k }}" {% if is_edit and user.role == k %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- 第三行：所属公司、职位 -->
+            <div class="col-md-6">
+                <label class="form-label">所属公司</label>
+                <input type="text" name="company" class="form-control" 
+                       value="{% if is_edit %}{{ user.company|default:'' }}{% endif %}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">职位</label>
+                <input type="text" name="position" class="form-control" 
+                       value="{% if is_edit %}{{ user.position|default:'' }}{% endif %}">
+            </div>
+
+            <!-- 第四行：审核状态（仅企业用户显示，通过JS联动） -->
+            <div class="col-md-6" id="audit-status" style="display: none;">
+                <label class="form-label">企业用户审核状态</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="is_audited" id="is-audited"
+                           {% if is_edit and user.role == 'enterprise' and user.is_audited %}checked{% endif %}>
+                    <label class="form-check-label" for="is-audited">
+                        审核通过（勾选则为已审核，未勾选则为未审核）
+                    </label>
+                </div>
+            </div>
+
+            <!-- 第四行：用户头像 -->
+            <div class="col-md-6">
+                <label class="form-label">用户头像</label>
+                <input type="file" name="avatar" class="form-control" accept="image/*">
+                {% if is_edit and user.avatar %}
+                <div class="mt-2">
+                    <span class="form-text text-muted">现有头像：</span>
+                    <img src="{{ user.avatar.url }}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" alt="现有头像">
+                </div>
+                {% else %}
+                <div class="form-text">未上传则使用平台默认头像</div>
+                {% endif %}
+            </div>
+
+            <!-- 操作按钮：与原有页面按钮风格一致 -->
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary">
+                    {% if is_edit %}保存修改{% else %}新增用户{% endif %}
+                </button>
+                <a href="{% url 'administrator:user_manage' %}" class="btn btn-secondary ms-2">取消返回</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JS实现：角色为企业用户时，显示审核状态选项 -->
+<script>
+    const roleSelect = document.getElementById('user-role');
+    const auditStatus = document.getElementById('audit-status');
+    // 初始加载判断
+    if (roleSelect.value === 'enterprise') {
+        auditStatus.style.display = 'block';
+    }
+    // 选择角色时联动
+    roleSelect.addEventListener('change', function() {
+        if (this.value === 'enterprise') {
+            auditStatus.style.display = 'block';
+        } else {
+            auditStatus.style.display = 'none';
+            // 非企业用户，取消审核勾选（避免提交无效值）
+            document.getElementById('is-audited').checked = false;
+        }
+    });
+</script>
+{% endblock %}

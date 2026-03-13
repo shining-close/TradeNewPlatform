@@ -1,0 +1,78 @@
+{% extends 'administrator/base.html' %}
+{% block title %}公司详情 - {{ company.name }}{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">公司详情</h4>
+        <div class="d-flex gap-2">
+            <a href="{% url 'administrator:company_edit' company.id %}" class="btn btn-sm btn-primary">
+                修改信息
+            </a>
+            <a href="{% url 'administrator:company_manage' %}" class="btn btn-sm btn-secondary">
+                返回列表
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- 左侧：公司基本信息 -->
+            <div class="col-md-8">
+                <div class="mb-4">
+                    <h5 class="text-primary">📌 基本信息</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td width="120" class="fw-bold">公司名称：</td>
+                            <td>{{ company.name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">公司地址：</td>
+                            <td>{{ company.address }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">联系电话：</td>
+                            <td>{{ company.phone }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">联系人：</td>
+                            <td>{{ company.contact_person|default:"未填写" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">合作物流：</td>
+                            <td>{{ company.transport|default:"未填写" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">创建时间：</td>
+                            <td>{{ company.create_time|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="text-primary">📄 公司简介</h5>
+                    <div class="p-3 bg-light rounded">
+                        {{ company.intro|default:"暂无简介" }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：公司图片 -->
+            <div class="col-md-4">
+                <h5 class="text-primary">🖼️ 公司图片</h5>
+                {% if company.image %}
+                <div class="text-center">
+                    <img src="{{ company.image.url }}" 
+                         class="img-fluid rounded shadow" 
+                         style="max-height: 300px; object-fit: cover;" 
+                         alt="{{ company.name }}">
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5 bg-light rounded">
+                    <i class="fas fa-image fa-3x mb-2"></i>
+                    <p>暂无公司图片</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

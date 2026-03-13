@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ order.title }} - 订单详情{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题 -->
+    <div class="bg-primary text-white py-4 mb-4 text-center">
+        <h2 class="mb-0">
+            {% if order.flag == '1' %}供应信息{% else %}采购需求{% endif %}详情
+        </h2>
+    </div>
+
+    <!-- 订单详情卡片 -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-primary">{{ order.title }}</h5>
+            <!-- 仅发布者显示编辑按钮 -->
+            {% if order.user == request.user %}
+                <a href="{% url 'trade:order_edit' order.id %}" class="btn btn-sm btn-warning">
+                    编辑订单
+                </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <!-- 基础信息 -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>订单类型：</strong>{{ order.get_flag_display }}</p>
+                    <p><strong>行业分类：</strong>{{ order.category|default:"未分类" }}</p>
+                    <p><strong>发布人：</strong>{{ order.user.username }}</p>
+                    <p><strong>发布时间：</strong>{{ order.create_time|date:"Y-m-d H:i:s" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>订单状态：</strong>
+                        {% if order.status == 'completed' %}
+                            <span class="badge bg-success">{{ order.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge bg-warning">{{ order.get_status_display }}</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>截止时间：</strong>{{ order.end_time|date:"Y-m-d H:i:s"|default:"无" }}</p>
+                    <p><strong>关联物流：</strong>{{ order.transport.name|default:"无" }}</p>
+                </div>
+            </div>
+
+        <!-- 新增：订单图片展示 -->
+{% if order.image %}
+    <div class="mb-4">
+        <h6>订单图片：</h6>
+        <img src="{{ order.image.url }}" alt="订单图片"
+             style="max-width: 800px; max-height: 600px; border: 1px solid #dee2e6; border-radius: 4px;">
+    </div>
+{% endif %}
+            
+            <!-- 详细内容 -->
+            <hr>
+            <h6>详细描述：</h6>
+            <div class="bg-light p-3 rounded">
+                {{ order.content|linebreaks }}  <!-- 保留换行 -->
+            </div>
+        </div>
+        <div class="card-footer bg-light">
+            <a href="{% url 'trade:order_list' %}?flag={{ order.flag }}" class="btn btn-outline-primary">
+                返回{% if order.flag == '1' %}供应列表{% else %}采购列表{% endif %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

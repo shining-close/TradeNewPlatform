@@ -1,0 +1,26 @@
+# Python 虚拟环境
+.venv/
+venv/
+ENV/
+env/
+
+# Django 核心忽略
+__pycache__/
+*.py[cod]
+*$py.class
+db.sqlite3
+db.sqlite3-journal
+local_settings.py
+media/
+static/
+
+# PyCharm 配置
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.log

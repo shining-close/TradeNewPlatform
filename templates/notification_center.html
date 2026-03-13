@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}通知中心{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="bg-primary text-white py-4 mb-4 text-center">
+        <h2 class="mb-0">通知中心</h2>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            {% if notifications %}
+                <div class="list-group">
+
+{% for note in notifications %}
+<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+    <div>
+        <p class="mb-1">{{ note.message }}</p>
+        <small class="text-muted">
+            关联订单：<a href="{% url 'trade:order_detail' note.order.id %}">{{ note.order.title }}</a>
+            <br>{{ note.created_at|date:"Y-m-d H:i" }}
+        </small>
+    </div>
+    {% if not note.is_read %}
+        <span class="badge bg-primary">未读</span>
+    {% else %}
+        <span class="badge bg-secondary">已读</span>
+    {% endif %}
+</div>
+{% endfor %}
+
+
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">暂无通知</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
