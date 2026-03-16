@@ -1,0 +1,63 @@
+{% extends 'administrator/base.html' %}
+<!-- Page title: bilingual with add/edit distinguish -->
+{% block title %}
+    {% if is_edit %}
+        {% if request.session.site_language == 'zh' %}修改行业分类{% else %}Edit Industry Category{% endif %} - {{ industry.name }}
+    {% else %}
+        {% if request.session.site_language == 'zh' %}新增行业分类{% else %}Add Industry Category{% endif %}
+    {% endif %}
+    - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h4 class="mb-0">
+            {% if is_edit %}
+                {% if request.session.site_language == 'zh' %}修改行业分类（{{ industry.name }}）{% else %}Edit Industry Category ({{ industry.name }}){% endif %}
+            {% else %}
+                {% if request.session.site_language == 'zh' %}新增行业分类{% else %}Add Industry Category{% endif %}
+            {% endif %}
+        </h4>
+    </div>
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <!-- Industry Name: required field -->
+            <div class="col-12">
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}行业名称{% else %}Industry Name{% endif %}
+                    <span class="text-danger">*</span>
+                </label>
+                <input type="text" name="name" class="form-control" required
+                       value="{% if is_edit %}{{ industry.name }}{% endif %}">
+                <div class="form-text">
+                    {% if request.session.site_language == 'zh' %}行业名称必须唯一，不可重复{% else %}Industry name must be unique and cannot be duplicated{% endif %}
+                </div>
+            </div>
+            <!-- Industry Description: optional, max 200 chars -->
+            <div class="col-12">
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}行业描述（可选，最多200字）{% else %}Industry Description (Optional, Max 200 Chars){% endif %}
+                </label>
+                <textarea name="desc" class="form-control" rows="4" maxlength="200">
+                    {% if is_edit %}{{ industry.desc|default:'' }}{% endif %}
+                </textarea>
+            </div>
+            <!-- Submit & Cancel Buttons: bilingual -->
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    {% if is_edit %}
+                        {% if request.session.site_language == 'zh' %}保存修改{% else %}Save Changes{% endif %}
+                    {% else %}
+                        {% if request.session.site_language == 'zh' %}新增行业{% else %}Add Industry{% endif %}
+                    {% endif %}
+                </button>
+                <a href="{% url 'administrator:industry_manage' %}" class="btn btn-secondary ms-2">
+                    {% if request.session.site_language == 'zh' %}取消返回{% else %}Cancel & Back{% endif %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

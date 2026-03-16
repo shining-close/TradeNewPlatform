@@ -1,26 +1,39 @@
 {% extends 'administrator/base.html' %}
-{% block title %}资讯管理 - 管理后台{% endblock %}
+<!-- Page title with bilingual support -->
+{% block title %}
+    {% if request.session.site_language == 'zh' %}资讯管理{% else %}News Management{% endif %} - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-        <h4 class="mb-0">资讯管理</h4>
+        <!-- Page header title (bilingual) -->
+        <h4 class="mb-0">{% if request.session.site_language == 'zh' %}资讯管理{% else %}News Management{% endif %}</h4>
         <div class="d-flex gap-2 mt-2 mt-md-0">
-            <!-- 搜索框 -->
+            <!-- Search & filter form: bilingual placeholder/options/buttons -->
             <form method="get" class="d-flex gap-1">
-                <input type="text" name="keyword" class="form-control form-control-sm" 
-                       placeholder="搜索标题" value="{{ current_keyword }}">
+                <input type="text" name="keyword" class="form-control form-control-sm"
+                       placeholder="{% if request.session.site_language == 'zh' %}搜索标题{% else %}Search Title{% endif %}"
+                       value="{{ current_keyword }}">
                 <select name="category" class="form-select form-control-sm">
-                    <option value="">全部分类</option>
+                    <option value="">{% if request.session.site_language == 'zh' %}全部分类{% else %}All Categories{% endif %}</option>
                     {% for k, v in category_choices %}
                     <option value="{{ k }}" {% if current_category == k %}selected{% endif %}>{{ v }}</option>
                     {% endfor %}
                 </select>
-                <button type="submit" class="btn btn-sm btn-primary">搜索</button>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    {% if request.session.site_language == 'zh' %}搜索{% else %}Search{% endif %}
+                </button>
                 {% if current_keyword or current_category %}
-                    <a href="{% url 'administrator:news_manage' %}" class="btn btn-sm btn-outline-secondary">清空</a>
+                    <a href="{% url 'administrator:news_manage' %}" class="btn btn-sm btn-outline-secondary">
+                        {% if request.session.site_language == 'zh' %}清空{% else %}Clear{% endif %}
+                    </a>
                 {% endif %}
             </form>
-            <a href="{% url 'administrator:news_add' %}" class="btn btn-sm btn-primary">+ 新增资讯</a>
+            <!-- Add news button (bilingual) -->
+            <a href="{% url 'administrator:news_add' %}" class="btn btn-sm btn-primary">
+                + {% if request.session.site_language == 'zh' %}新增资讯{% else %}Add News{% endif %}
+            </a>
         </div>
     </div>
     <div class="card-body">
@@ -29,11 +42,11 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>标题</th>
-                        <th>分类</th>
-                        <th>发布用户</th>
-                        <th>发布时间</th>
-                        <th>操作</th>
+                        <th>{% if request.session.site_language == 'zh' %}标题{% else %}Title{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}分类{% else %}Category{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}发布用户{% else %}Publisher{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}发布时间{% else %}Publish Time{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}操作{% else %}Actions{% endif %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,18 +58,25 @@
                         <td>{{ n.user.username }}</td>
                         <td>{{ n.create_time|date:"Y-m-d H:i" }}</td>
                         <td class="d-flex gap-2">
-                            <a href="{% url 'administrator:news_edit' n.id %}" class="btn btn-sm btn-outline-primary">修改</a>
-                            <a href="{% url 'administrator:news_delete' n.id %}" class="btn btn-sm btn-danger" 
-                               onclick="return confirm('确定删除该资讯？')">删除</a>
+                            <!-- Edit button (bilingual) -->
+                            <a href="{% url 'administrator:news_edit' n.id %}" class="btn btn-sm btn-outline-primary">
+                                {% if request.session.site_language == 'zh' %}修改{% else %}Edit{% endif %}
+                            </a>
+                            <!-- Delete button: bilingual text + confirm prompt -->
+                            <a href="{% url 'administrator:news_delete' n.id %}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('{% if request.session.site_language == 'zh' %}确定删除该资讯？{% else %}Are you sure to delete this news?{% endif %}')">
+                                {% if request.session.site_language == 'zh' %}删除{% else %}Delete{% endif %}
+                            </a>
                         </td>
                     </tr>
                     {% empty %}
+                    <!-- Empty table prompt (bilingual: search no result / no data) -->
                     <tr>
                         <td colspan="6" class="text-center text-muted py-3">
                             {% if current_keyword or current_category %}
-                                未找到匹配的资讯
+                                {% if request.session.site_language == 'zh' %}未找到匹配的资讯{% else %}No matching news found{% endif %}
                             {% else %}
-                                暂无资讯数据
+                                {% if request.session.site_language == 'zh' %}暂无资讯数据{% else %}No news data yet{% endif %}
                             {% endif %}
                         </td>
                     </tr>
@@ -64,16 +84,17 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- 分页控件 -->
+        <!-- Pagination component (full bilingual support) -->
         {% if paginator.num_pages > 1 %}
-        <nav aria-label="资讯分页" class="mt-4">
+        <nav aria-label="{% if request.session.site_language == 'zh' %}资讯分页{% else %}News Pagination{% endif %}" class="mt-4">
             <ul class="pagination justify-content-center">
                 <li class="page-item {% if not news.has_previous %}disabled{% endif %}">
                     {% if news.has_previous %}
-                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}page={{ news.previous_page_number }}">上一页</a>
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}page={{ news.previous_page_number }}">
+                            {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
+                        </a>
                     {% else %}
-                        <span class="page-link">上一页</span>
+                        <span class="page-link">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span>
                     {% endif %}
                 </li>
                 {% for num in news.paginator.page_range %}
@@ -85,14 +106,21 @@
                 {% endfor %}
                 <li class="page-item {% if not news.has_next %}disabled{% endif %}">
                     {% if news.has_next %}
-                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}page={{ news.next_page_number }}">下一页</a>
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}page={{ news.next_page_number }}">
+                            {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
+                        </a>
                     {% else %}
-                        <span class="page-link">下一页</span>
+                        <span class="page-link">{% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}</span>
                     {% endif %}
                 </li>
             </ul>
+            <!-- Pagination info (bilingual: total count / current page) -->
             <div class="text-center mt-2 text-muted">
-                共 {{ paginator.count }} 条资讯，当前第 {{ news.number }} 页/共 {{ paginator.num_pages }} 页
+                {% if request.session.site_language == 'zh' %}
+                    共 {{ paginator.count }} 条资讯，当前第 {{ news.number }} 页/共 {{ paginator.num_pages }} 页
+                {% else %}
+                    Total {{ paginator.count }} news items, Page {{ news.number }} / {{ paginator.num_pages }}
+                {% endif %}
             </div>
         </nav>
         {% endif %}

@@ -1,36 +1,133 @@
 {% extends 'base.html' %}
-
-{% block title %}新闻资讯 - 中俄贸易平台{% endblock %}
+{% block title %}
+    {% if request.session.site_language == 'zh' %}
+        新闻资讯 - 跨国贸易平台
+    {% else %}
+        News & Information - Cross-border Trade Platform
+    {% endif %}
+{% endblock %}
 
 {% block content %}
+<!-- Main content container: News list page (search + filter + pagination + news cards) -->
 <div class="container py-4">
+    <!-- Page header -->
     <div class="bg-primary text-white py-4 mb-4 text-center">
-        <h2 class="mb-0">新闻资讯</h2>
+        <h2 class="mb-0">{% if request.session.site_language == 'zh' %}新闻资讯{% else %}News & Information{% endif %}</h2>
     </div>
 
+    <!-- Search + category filter bar -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-center">
+                <!-- Keyword search box -->
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text"
+                               class="form-control"
+                               name="keyword"
+                               placeholder="{% if request.session.site_language == 'zh' %}输入新闻标题关键字搜索...{% else %}Enter news title keyword to search...{% endif %}"
+                               value="{{ keyword|default:'' }}"
+                               onkeydown="if(event.keyCode===13) this.form.submit()">
+                        <button class="btn btn-primary" type="submit">
+                            {% if request.session.site_language == 'zh' %}搜索{% else %}Search{% endif %}
+                        </button>
+                    </div>
+                </div>
+                <!-- Category filter dropdown (auto-submit on select) -->
+                <div class="col-md-4">
+                    <select class="form-select" name="category" onchange="this.form.submit()">
+                        <option value="">{% if request.session.site_language == 'zh' %}全部分类{% else %}All Categories{% endif %}</option>
+                        <option value="policy" {% if category == 'policy' %}selected{% endif %}>
+                            {% if request.session.site_language == 'zh' %}政策{% else %}Policy{% endif %}
+                        </option>
+                        <option value="market" {% if category == 'market' %}selected{% endif %}>
+                            {% if request.session.site_language == 'zh' %}市场{% else %}Market{% endif %}
+                        </option>
+                        <option value="logistics" {% if category == 'logistics' %}selected{% endif %}>
+                            {% if request.session.site_language == 'zh' %}物流{% else %}Logistics{% endif %}
+                        </option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- News list cards -->
     <div class="row g-4">
-        {% for item in news %}
+        {% for news in news_list %}
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm">
-                {% if item.image_url %}
-                <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.title }}" style="height: 180px; object-fit: cover;">
+                {% if news.image %}
+                <img src="{{ news.image.url }}" class="card-img-top" alt="{{ news.title }}" style="height: 180px; object-fit: cover;">
                 {% endif %}
                 <div class="card-body">
                     <div class="mb-2">
-                        <span class="badge bg-primary">{{ item.get_category_display }}</span>
-                        <span class="badge bg-secondary ms-1">{{ item.create_time|date:"Y-m-d" }}</span>
+                        <span class="badge bg-primary">{{ news.get_category_display }}</span>
+                        <span class="badge bg-secondary ms-1">{{ news.create_time|date:"Y-m-d" }}</span>
                     </div>
-                    <h5 class="card-title text-primary">{{ item.title }}</h5>
-                    <p class="card-text text-muted">{{ item.content|truncatechars:100 }}</p>
-                    <a href="#" class="btn btn-sm btn-outline-primary w-100">阅读全文</a>
+                    <h5 class="card-title text-primary">{{ news.title }}</h5>
+                    <p class="card-text text-muted">{{ news.content|truncatechars:100 }}</p>
+                    <a href="{% url 'trade:news_detail' news.id %}" class="btn btn-sm btn-outline-primary w-100">
+                        {% if request.session.site_language == 'zh' %}阅读全文{% else %}Read Full Article{% endif %}
+                    </a>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
-            <p class="text-muted fs-5">暂无最新资讯，敬请期待！</p>
+            <p class="text-muted fs-5">
+                {% if request.session.site_language == 'zh' %}暂无符合条件的新闻资讯{% else %}No news matching the criteria{% endif %}
+            </p>
         </div>
         {% endfor %}
     </div>
+
+    <!-- Pagination control (retained from original) -->
+    {% if news_list.paginator.num_pages > 1 %}
+    <div class="d-flex justify-content-center mt-5">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <!-- Previous page -->
+                {% if news_list.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ news_list.previous_page_number }}&keyword={{ keyword }}&category={{ category }}">
+                        {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span>
+                </li>
+                {% endif %}
+
+                <!-- Page numbers -->
+                {% for num in news_list.paginator.page_range %}
+                    {% if news_list.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&keyword={{ keyword }}&category={{ category }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next page -->
+                {% if news_list.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ news_list.next_page_number }}&keyword={{ keyword }}&category={{ category }}">
+                        {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">{% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

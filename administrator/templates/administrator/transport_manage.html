@@ -1,22 +1,34 @@
 {% extends 'administrator/base.html' %}
-{% block title %}物流管理 - 管理后台{% endblock %}
+<!-- Page title: bilingual support -->
+{% block title %}
+    {% if request.session.site_language == 'zh' %}物流管理{% else %}Logistics Management{% endif %} - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-        <h4 class="mb-0">物流信息管理</h4>
-        <!-- 搜索框 + 添加物流按钮（适配响应式，小屏幕自动换行） -->
+        <!-- Page header title (bilingual) -->
+        <h4 class="mb-0">{% if request.session.site_language == 'zh' %}物流信息管理{% else %}Logistics Information Management{% endif %}</h4>
+        <!-- Search box + add logistics button (responsive layout) -->
         <div class="d-flex gap-2 mt-2 mt-md-0">
-            <!-- 新增：物流名称关键字搜索 -->
+            <!-- New: Logistics name keyword search -->
             <form method="get" class="d-flex gap-1">
                 <input type="text" name="keyword" class="form-control form-control-sm"
-                       placeholder="输入物流名称搜索" value="{{ current_keyword }}">
-                <button type="submit" class="btn btn-sm btn-primary">搜索</button>
+                       placeholder="{% if request.session.site_language == 'zh' %}输入物流名称搜索{% else %}Search by Logistics Name{% endif %}"
+                       value="{{ current_keyword }}">
+                <button type="submit" class="btn btn-sm btn-primary">
+                    {% if request.session.site_language == 'zh' %}搜索{% else %}Search{% endif %}
+                </button>
                 {% if current_keyword %}
-                    <a href="{% url 'administrator:transport_manage' %}" class="btn btn-sm btn-outline-secondary">清空</a>
+                    <a href="{% url 'administrator:transport_manage' %}" class="btn btn-sm btn-outline-secondary">
+                        {% if request.session.site_language == 'zh' %}清空{% else %}Clear{% endif %}
+                    </a>
                 {% endif %}
             </form>
-            <!-- 原有添加物流按钮 -->
-            <a href="{% url 'administrator:transport_add' %}" class="btn btn-sm btn-primary">+ 添加物流</a>
+            <!-- Original: Add logistics button -->
+            <a href="{% url 'administrator:transport_add' %}" class="btn btn-sm btn-primary">
+                + {% if request.session.site_language == 'zh' %}添加物流{% else %}Add Logistics{% endif %}
+            </a>
         </div>
     </div>
     <div class="card-body">
@@ -25,14 +37,14 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>物流名称</th>
-                        <th>类型</th>
-                        <th>参考价格</th>
-                        <th>时效</th>
-                        <th>物流公司</th>
-                        <th>录入用户</th>
-                        <th>创建时间</th>
-                        <th>操作</th>
+                        <th>{% if request.session.site_language == 'zh' %}物流名称{% else %}Logistics Name{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}类型{% else %}Type{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}参考价格{% else %}Reference Price{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}时效{% else %}Delivery Time{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}物流公司{% else %}Logistics Company{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}录入用户{% else %}Entry User{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}创建时间{% else %}Creation Time{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}操作{% else %}Actions{% endif %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,6 +52,7 @@
                     <tr>
                         <td>{{ t.id }}</td>
                         <td>{{ t.name }}</td>
+                        <!-- Default '-' for empty values (unified for both languages) -->
                         <td>{{ t.type|default:"-" }}</td>
                         <td>{{ t.price|default:"-" }}</td>
                         <td>{{ t.time|default:"-" }}</td>
@@ -47,19 +60,30 @@
                         <td>{{ t.user.username }}</td>
                         <td>{{ t.create_time|date:"Y-m-d H:i" }}</td>
                         <td class="d-flex gap-2">
-                            <a href="{% url 'administrator:transport_edit' t.id %}" class="btn btn-sm btn-primary">编辑</a>
+                            <!-- Edit button (bilingual) -->
+                            <a href="{% url 'administrator:transport_edit' t.id %}" class="btn btn-sm btn-primary">
+                                {% if request.session.site_language == 'zh' %}编辑{% else %}Edit{% endif %}
+                            </a>
+                            <!-- Delete button: bilingual text + confirm prompt -->
                             <a href="{% url 'administrator:transport_delete' t.id %}"
                                class="btn btn-sm btn-danger"
-                               onclick="return confirm('确定删除？')">删除</a>
+                               onclick="return confirm('{% if request.session.site_language == 'zh' %}确定删除？{% else %}Are you sure to delete?{% endif %}')">
+                                {% if request.session.site_language == 'zh' %}删除{% else %}Delete{% endif %}
+                            </a>
                         </td>
                     </tr>
                     {% empty %}
+                    <!-- Empty table prompt (bilingual: search no result / no data) -->
                     <tr>
                         <td colspan="9" class="text-center text-muted py-3">
                             {% if current_keyword %}
-                                未找到包含「{{ current_keyword }}」的物流信息
+                                {% if request.session.site_language == 'zh' %}
+                                    未找到包含「{{ current_keyword }}」的物流信息
+                                {% else %}
+                                    No logistics information containing «{{ current_keyword }}» found
+                                {% endif %}
                             {% else %}
-                                暂无物流数据
+                                {% if request.session.site_language == 'zh' %}暂无物流数据{% else %}No logistics data yet{% endif %}
                             {% endif %}
                         </td>
                     </tr>
@@ -67,21 +91,21 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- 新增：分页控件（修复EmptyPage，禁用状态无链接，与搜索联动） -->
+        <!-- Pagination component (fixed EmptyPage, disabled state without link, linked with search) -->
         {% if paginator.num_pages > 1 %}
-        <nav aria-label="物流分页" class="mt-4">
+        <nav aria-label="{% if request.session.site_language == 'zh' %}物流分页{% else %}Logistics Pagination{% endif %}" class="mt-4">
             <ul class="pagination justify-content-center">
-                <!-- 上一页：禁用状态用span，避免无效链接 -->
+                <!-- Previous page: use span for disabled state to avoid invalid link -->
                 <li class="page-item {% if not transports.has_previous %}disabled{% endif %}">
                     {% if transports.has_previous %}
-                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ transports.previous_page_number }}">上一页</a>
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ transports.previous_page_number }}">
+                            {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
+                        </a>
                     {% else %}
-                        <span class="page-link">上一页</span>
+                        <span class="page-link">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span>
                     {% endif %}
                 </li>
-
-                <!-- 页码：仅显示当前页前后2页，最多5个页码，避免拥挤 -->
+                <!-- Page numbers: only show 2 pages before and after current page (max 5 pages) -->
                 {% for num in transports.paginator.page_range %}
                     {% if num >= transports.number|add:-2 and num <= transports.number|add:2 %}
                         <li class="page-item {% if num == transports.number %}active{% endif %}">
@@ -89,19 +113,24 @@
                         </li>
                     {% endif %}
                 {% endfor %}
-
-                <!-- 下一页：禁用状态用span -->
+                <!-- Next page: use span for disabled state -->
                 <li class="page-item {% if not transports.has_next %}disabled{% endif %}">
                     {% if transports.has_next %}
-                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ transports.next_page_number }}">下一页</a>
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ transports.next_page_number }}">
+                            {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
+                        </a>
                     {% else %}
-                        <span class="page-link">下一页</span>
+                        <span class="page-link">{% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}</span>
                     {% endif %}
                 </li>
             </ul>
-            <!-- 分页信息提示 -->
+            <!-- Pagination information prompt -->
             <div class="text-center mt-2 text-muted">
-                共 {{ paginator.count }} 条物流信息，当前第 {{ transports.number }} 页/共 {{ paginator.num_pages }} 页
+                {% if request.session.site_language == 'zh' %}
+                    共 {{ paginator.count }} 条物流信息，当前第 {{ transports.number }} 页/共 {{ paginator.num_pages }} 页
+                {% else %}
+                    Total {{ paginator.count }} logistics records, Page {{ transports.number }} / {{ paginator.num_pages }}
+                {% endif %}
             </div>
         </nav>
         {% endif %}

@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+
 urlpatterns = [
     path('django-admin/', admin.site.urls),  # 保留Django自带admin，重命名避免冲突
     path('', include('trade.urls')),  # 业务应用路由

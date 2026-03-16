@@ -1,44 +1,69 @@
 {% extends 'administrator/base.html' %}
-{% block title %}订单管理 - 管理后台{% endblock %}
+<!-- Page title with bilingual support -->
+{% block title %}
+    {% if request.session.site_language == 'zh' %}订单管理{% else %}Order Management{% endif %} - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-        <h4 class="mb-0">订单管理</h4>
-        <!-- 双搜索框 + 筛选按钮 + 新增订单按钮 -->
+        <!-- Page header title (bilingual) -->
+        <h4 class="mb-0">{% if request.session.site_language == 'zh' %}订单管理{% else %}Order Management{% endif %}</h4>
+        <!-- Dual search + filter buttons + add order button (all bilingual) -->
         <div class="d-flex gap-2 mt-2 mt-md-0 flex-wrap">
-            <!-- 新增：用户名搜索框 -->
+            <!-- New: Username search form -->
             <form method="get" class="d-flex gap-1 me-2">
                 <input type="text" name="user_keyword" class="form-control form-control-sm"
-                       placeholder="搜索用户名" value="{{ current_user_keyword }}">
-                <button type="submit" class="btn btn-sm btn-outline-primary">搜用户</button>
+                       placeholder="{% if request.session.site_language == 'zh' %}搜索用户名{% else %}Search Username{% endif %}"
+                       value="{{ current_user_keyword }}">
+                <button type="submit" class="btn btn-sm btn-outline-primary">
+                    {% if request.session.site_language == 'zh' %}搜用户{% else %}Search User{% endif %}
+                </button>
                 {% if current_user_keyword %}
                     <a href="{% url 'administrator:order_manage' %}{% if current_title_keyword %}?title_keyword={{ current_title_keyword }}{% endif %}"
-                       class="btn btn-sm btn-outline-secondary">清空</a>
+                       class="btn btn-sm btn-outline-secondary">
+                        {% if request.session.site_language == 'zh' %}清空{% else %}Clear{% endif %}
+                    </a>
                 {% endif %}
             </form>
-
-            <!-- 原有：标题搜索框 -->
+            <!-- Original: Title search form -->
             <form method="get" class="d-flex gap-1 me-2">
                 <input type="text" name="title_keyword" class="form-control form-control-sm"
-                       placeholder="搜索订单标题" value="{{ current_title_keyword }}">
-                <button type="submit" class="btn btn-sm btn-primary">搜标题</button>
+                       placeholder="{% if request.session.site_language == 'zh' %}搜索订单标题{% else %}Search Order Title{% endif %}"
+                       value="{{ current_title_keyword }}">
+                <button type="submit" class="btn btn-sm btn-primary">
+                    {% if request.session.site_language == 'zh' %}搜标题{% else %}Search Title{% endif %}
+                </button>
                 {% if current_title_keyword %}
                     <a href="{% url 'administrator:order_manage' %}{% if current_user_keyword %}?user_keyword={{ current_user_keyword }}{% endif %}"
-                       class="btn btn-sm btn-outline-secondary">清空</a>
+                       class="btn btn-sm btn-outline-secondary">
+                        {% if request.session.site_language == 'zh' %}清空{% else %}Clear{% endif %}
+                    </a>
                 {% endif %}
             </form>
-
-            <!-- 原有筛选+新增按钮（携带双搜索参数） -->
-            <a href="{% url 'administrator:order_add' %}" class="btn btn-sm btn-primary">新增订单</a>
-            <a href="{% url 'administrator:order_manage' %}" class="btn btn-sm btn-secondary">全部订单</a>
+            <!-- Original filters + add button (with dual search params) -->
+            <a href="{% url 'administrator:order_add' %}" class="btn btn-sm btn-primary">
+                {% if request.session.site_language == 'zh' %}新增订单{% else %}Add Order{% endif %}
+            </a>
+            <a href="{% url 'administrator:order_manage' %}" class="btn btn-sm btn-secondary">
+                {% if request.session.site_language == 'zh' %}全部订单{% else %}All Orders{% endif %}
+            </a>
             <a href="?flag=1{% if current_title_keyword %}&title_keyword={{ current_title_keyword }}{% endif %}{% if current_user_keyword %}&user_keyword={{ current_user_keyword }}{% endif %}"
-               class="btn btn-sm btn-info">供应订单</a>
+               class="btn btn-sm btn-info">
+                {% if request.session.site_language == 'zh' %}供应订单{% else %}Supply Orders{% endif %}
+            </a>
             <a href="?flag=2{% if current_title_keyword %}&title_keyword={{ current_title_keyword }}{% endif %}{% if current_user_keyword %}&user_keyword={{ current_user_keyword }}{% endif %}"
-               class="btn btn-sm btn-warning">需求订单</a>
+               class="btn btn-sm btn-warning">
+                {% if request.session.site_language == 'zh' %}需求订单{% else %}Demand Orders{% endif %}
+            </a>
             <a href="?status=completed{% if current_title_keyword %}&title_keyword={{ current_title_keyword }}{% endif %}{% if current_user_keyword %}&user_keyword={{ current_user_keyword }}{% endif %}"
-               class="btn btn-sm btn-success">已完成</a>
+               class="btn btn-sm btn-success">
+                {% if request.session.site_language == 'zh' %}已完成{% else %}Completed{% endif %}
+            </a>
             <a href="?status=uncompleted{% if current_title_keyword %}&title_keyword={{ current_title_keyword }}{% endif %}{% if current_user_keyword %}&user_keyword={{ current_user_keyword }}{% endif %}"
-               class="btn btn-sm btn-danger">未完成</a>
+               class="btn btn-sm btn-danger">
+                {% if request.session.site_language == 'zh' %}未完成{% else %}Uncompleted{% endif %}
+            </a>
         </div>
     </div>
     <div class="card-body">
@@ -47,13 +72,13 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>订单标题</th>
-                        <th>发布用户</th>  <!-- 突出显示用户名，方便核对 -->
-                        <th>类型</th>
-                        <th>状态</th>
-                        <th>发布时间</th>
-                        <th>图片</th>
-                        <th>操作</th>
+                        <th>{% if request.session.site_language == 'zh' %}订单标题{% else %}Order Title{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}发布用户{% else %}Publisher{% endif %}</th>  <!-- Highlight username for verification -->
+                        <th>{% if request.session.site_language == 'zh' %}类型{% else %}Type{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}状态{% else %}Status{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}发布时间{% else %}Publish Time{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}图片{% else %}Image{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}操作{% else %}Actions{% endif %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,34 +86,53 @@
                     <tr>
                         <td>{{ order.id }}</td>
                         <td>{{ order.title|truncatechars:20 }}</td>
-                        <td><span class="badge bg-secondary">{{ order.user.username }}</span></td>  <!-- 用户名标色突出 -->
+                        <td><span class="badge bg-secondary">{{ order.user.username }}</span></td>  <!-- Highlight username with badge -->
                         <td>
-                            {% if order.flag == "1" %}<span class="badge bg-info">供应</span>{% else %}<span class="badge bg-warning">需求</span>{% endif %}
+                            {% if order.flag == "1" %}
+                                <span class="badge bg-info">{% if request.session.site_language == 'zh' %}供应{% else %}Supply{% endif %}</span>
+                            {% else %}
+                                <span class="badge bg-warning">{% if request.session.site_language == 'zh' %}需求{% else %}Demand{% endif %}</span>
+                            {% endif %}
                         </td>
                         <td>
-                            {% if order.status == "completed" %}<span class="badge bg-success">已完成</span>{% else %}<span class="badge bg-danger">未完成</span>{% endif %}
+                            {% if order.status == "completed" %}
+                                <span class="badge bg-success">{% if request.session.site_language == 'zh' %}已完成{% else %}Completed{% endif %}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{% if request.session.site_language == 'zh' %}未完成{% else %}Uncompleted{% endif %}</span>
+                            {% endif %}
                         </td>
                         <td>{{ order.create_time|date:"Y-m-d" }}</td>
                         <td>
                             {% if order.image %}
-                            <img src="{{ order.image.url }}" style="width: 50px; height: 50px; object-fit: cover;" alt="订单图">
+                            <img src="{{ order.image.url }}" style="width: 50px; height: 50px; object-fit: cover;" alt="{% if request.session.site_language == 'zh' %}订单图{% else %}Order Image{% endif %}">
                             {% else %}
-                            <span class="text-muted">无</span>
+                            <span class="text-muted">{% if request.session.site_language == 'zh' %}无{% else %}None{% endif %}</span>
                             {% endif %}
                         </td>
                         <td class="d-flex gap-2">
-                            <a href="{% url 'administrator:order_edit' order.id %}" class="btn btn-sm btn-outline-primary">修改</a>
-                            <a href="{% url 'administrator:order_status' order.id %}" class="btn btn-sm btn-primary">切换状态</a>
-                            <a href="{% url 'administrator:order_delete' order.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定删除？')">删除</a>
+                            <!-- Edit button (bilingual) -->
+                            <a href="{% url 'administrator:order_edit' order.id %}" class="btn btn-sm btn-outline-primary">
+                                {% if request.session.site_language == 'zh' %}修改{% else %}Edit{% endif %}
+                            </a>
+                            <!-- Toggle status button (bilingual) -->
+                            <a href="{% url 'administrator:order_status' order.id %}" class="btn btn-sm btn-primary">
+                                {% if request.session.site_language == 'zh' %}切换状态{% else %}Toggle Status{% endif %}
+                            </a>
+                            <!-- Delete button: bilingual text + confirm prompt -->
+                            <a href="{% url 'administrator:order_delete' order.id %}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('{% if request.session.site_language == 'zh' %}确定删除？{% else %}Are you sure to delete?{% endif %}')">
+                                {% if request.session.site_language == 'zh' %}删除{% else %}Delete{% endif %}
+                            </a>
                         </td>
                     </tr>
                     {% empty %}
+                    <!-- Empty table prompt (bilingual: search no result / no data) -->
                     <tr>
                         <td colspan="8" class="text-center text-muted py-3">
                             {% if current_title_keyword or current_user_keyword %}
-                                未找到匹配的订单
+                                {% if request.session.site_language == 'zh' %}未找到匹配的订单{% else %}No matching orders found{% endif %}
                             {% else %}
-                                暂无订单数据
+                                {% if request.session.site_language == 'zh' %}暂无订单数据{% else %}No order data yet{% endif %}
                             {% endif %}
                         </td>
                     </tr>
@@ -96,19 +140,19 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- 分页控件（携带双搜索+筛选参数） -->
+        <!-- Pagination component (with dual search + filter params) -->
         {% if paginator.num_pages > 1 %}
-        <nav aria-label="订单分页" class="mt-4">
+        <nav aria-label="{% if request.session.site_language == 'zh' %}订单分页{% else %}Order Pagination{% endif %}" class="mt-4">
             <ul class="pagination justify-content-center">
                 <li class="page-item {% if not orders.has_previous %}disabled{% endif %}">
                     {% if orders.has_previous %}
-                        <a class="page-link" href="?{% if current_flag %}flag={{ current_flag }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_title_keyword %}title_keyword={{ current_title_keyword }}&{% endif %}{% if current_user_keyword %}user_keyword={{ current_user_keyword }}&{% endif %}page={{ orders.previous_page_number }}">上一页</a>
+                        <a class="page-link" href="?{% if current_flag %}flag={{ current_flag }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_title_keyword %}title_keyword={{ current_title_keyword }}&{% endif %}{% if current_user_keyword %}user_keyword={{ current_user_keyword }}&{% endif %}page={{ orders.previous_page_number }}">
+                            {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
+                        </a>
                     {% else %}
-                        <span class="page-link">上一页</span>
+                        <span class="page-link">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span>
                     {% endif %}
                 </li>
-
                 {% for num in orders.paginator.page_range %}
                     {% if num >= orders.number|add:-2 and num <= orders.number|add:2 %}
                         <li class="page-item {% if num == orders.number %}active{% endif %}">
@@ -116,17 +160,23 @@
                         </li>
                     {% endif %}
                 {% endfor %}
-
                 <li class="page-item {% if not orders.has_next %}disabled{% endif %}">
                     {% if orders.has_next %}
-                        <a class="page-link" href="?{% if current_flag %}flag={{ current_flag }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_title_keyword %}title_keyword={{ current_title_keyword }}&{% endif %}{% if current_user_keyword %}user_keyword={{ current_user_keyword }}&{% endif %}page={{ orders.next_page_number }}">下一页</a>
+                        <a class="page-link" href="?{% if current_flag %}flag={{ current_flag }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_title_keyword %}title_keyword={{ current_title_keyword }}&{% endif %}{% if current_user_keyword %}user_keyword={{ current_user_keyword }}&{% endif %}page={{ orders.next_page_number }}">
+                            {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
+                        </a>
                     {% else %}
-                        <span class="page-link">下一页</span>
+                        <span class="page-link">{% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}</span>
                     {% endif %}
                 </li>
             </ul>
+            <!-- Pagination info (bilingual: total count / current page) -->
             <div class="text-center mt-2 text-muted">
-                共 {{ paginator.count }} 条订单，当前第 {{ orders.number }} 页/共 {{ paginator.num_pages }} 页
+                {% if request.session.site_language == 'zh' %}
+                    共 {{ paginator.count }} 条订单，当前第 {{ orders.number }} 页/共 {{ paginator.num_pages }} 页
+                {% else %}
+                    Total {{ paginator.count }} orders, Page {{ orders.number }} / {{ paginator.num_pages }}
+                {% endif %}
             </div>
         </nav>
         {% endif %}

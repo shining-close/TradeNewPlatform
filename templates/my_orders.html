@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% block title %}
+    {% if request.session.site_language == 'zh' %}
+        我的订单 - {{ user.username }}
+    {% else %}
+        My Orders - {{ user.username }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Main content container: Order management page (supply + purchase orders) -->
+<div class="container py-4">
+    <!-- Page header: Title + back to personal center button -->
+    <div class="bg-primary text-white py-4 mb-4 d-flex justify-content-between align-items-center px-4">
+        <h2 class="mb-0">{% if request.session.site_language == 'zh' %}我的订单管理{% else %}My Order Management{% endif %}</h2>
+        <a href="{% url 'trade:profile' %}" class="btn btn-light btn-sm">
+            {% if request.session.site_language == 'zh' %}返回个人中心{% else %}Back to Personal Center{% endif %}
+        </a>
+    </div>
+
+    <!-- Order category tabs (supply/purchase switch) -->
+    <ul class="nav nav-tabs mb-4" id="orderTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="supply-tab" data-bs-toggle="tab" data-bs-target="#supply" type="button" role="tab">
+                {% if request.session.site_language == 'zh' %}供应订单{% else %}Supply Orders{% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="purchase-tab" data-bs-toggle="tab" data-bs-target="#purchase" type="button" role="tab">
+                {% if request.session.site_language == 'zh' %}采购订单{% else %}Purchase Orders{% endif %}
+            </button>
+        </li>
+    </ul>
+
+    <!-- Order content area (tab panels) -->
+    <div class="tab-content" id="orderTabContent">
+        <!-- 1. Supply orders panel -->
+        <div class="tab-pane fade show active" id="supply" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                    <h5 class="mb-0">{% if request.session.site_language == 'zh' %}我的供应订单{% else %}My Supply Orders{% endif %}</h5>
+                    <!-- Add new button (only visible if audited) -->
+                    {% if user.is_authenticated and user.is_audited %}
+                        {% if user.role == 'enterprise' or user.role == 'admin' %}
+                            <a href="{% url 'trade:supply_create' %}" class="btn btn-sm btn-success">
+                                {% if request.session.site_language == 'zh' %}新增供应订单{% else %}Add Supply Order{% endif %}
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if supply_orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="30%">{% if request.session.site_language == 'zh' %}订单标题{% else %}Order Title{% endif %}</th>
+                                        <th width="15%">{% if request.session.site_language == 'zh' %}所属行业{% else %}Industry{% endif %}</th>
+                                        <th width="10%">{% if request.session.site_language == 'zh' %}订单状态{% else %}Order Status{% endif %}</th>
+                                        <th width="15%">{% if request.session.site_language == 'zh' %}发布时间{% else %}Publish Time{% endif %}</th>
+                                        <th width="20%">{% if request.session.site_language == 'zh' %}操作{% else %}Actions{% endif %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in supply_orders %}
+                                        <tr>
+                                            <td>{{ order.title }}</td>
+                                            <td>
+                                                {% if order.industry.name %}
+                                                    {{ order.industry.name }}
+                                                {% else %}
+                                                    {% if request.session.site_language == 'zh' %}未分类{% else %}Uncategorized{% endif %}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge {% if order.status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                                                    {% if order.get_status_display %}
+                                                        {{ order.get_status_display }}
+                                                    {% else %}
+                                                        {% if request.session.site_language == 'zh' %}待处理{% else %}Pending{% endif %}
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                            <td>{{ order.create_time|date:"Y-m-d H:i" }}</td>
+                                            <td>
+                                                <a href="{% url 'trade:order_detail' order.id %}" class="btn btn-sm btn-outline-primary me-1">
+                                                    {% if request.session.site_language == 'zh' %}查看{% else %}View{% endif %}
+                                                </a>
+                                                {% if user.is_audited %}
+                                                    {% if user == order.user and user.role == 'enterprise' or user.role == 'admin' %}
+                                                        <a href="{% url 'trade:order_edit' order.id %}" class="btn btn-sm btn-warning me-1">
+                                                            {% if request.session.site_language == 'zh' %}编辑{% else %}Edit{% endif %}
+                                                        </a>
+                                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ order.id }}">
+                                                            {% if request.session.site_language == 'zh' %}删除{% else %}Delete{% endif %}
+                                                        </button>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <!-- Delete confirmation modal -->
+                                        <div class="modal fade" id="deleteModal{{ order.id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-sm">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h6 class="modal-title">{% if request.session.site_language == 'zh' %}确认删除{% else %}Confirm Deletion{% endif %}</h6>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p class="mb-0">
+                                                            {% if request.session.site_language == 'zh' %}
+                                                                确定删除「{{ order.title }}」？
+                                                            {% else %}
+                                                                Are you sure to delete "{{ order.title }}"?
+                                                            {% endif %}
+                                                        </p>
+                                                        <small class="text-danger">{% if request.session.site_language == 'zh' %}此操作不可恢复！{% else %}This operation cannot be undone!{% endif %}</small>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+                                                            {% if request.session.site_language == 'zh' %}取消{% else %}Cancel{% endif %}
+                                                        </button>
+                                                        <form action="{% url 'trade:order_delete' order.id %}" method="post" class="d-inline">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                                {% if request.session.site_language == 'zh' %}删除{% else %}Delete{% endif %}
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-box-seam" style="font-size: 4rem;"></i>
+                            <p class="mt-3 fs-5">{% if request.session.site_language == 'zh' %}暂无供应订单{% else %}No supply orders yet{% endif %}</p>
+                            {% if user.is_authenticated and user.is_audited %}
+                                {% if user.role == 'enterprise' or user.role == 'admin' %}
+                                    <a href="{% url 'trade:supply_create' %}" class="btn btn-primary mt-2">
+                                        {% if request.session.site_language == 'zh' %}发布第一条供应订单{% else %}Publish Your First Supply Order{% endif %}
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <p class="mt-2 text-sm">{% if request.session.site_language == 'zh' %}审核通过后可发布订单{% else %}You can publish orders after being audited{% endif %}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Purchase orders panel -->
+        <div class="tab-pane fade" id="purchase" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                    <h5 class="mb-0">{% if request.session.site_language == 'zh' %}我的采购订单{% else %}My Purchase Orders{% endif %}</h5>
+                    <!-- Add new button (only visible if audited) -->
+                    {% if user.is_authenticated and user.is_audited %}
+                        {% if user.role == 'enterprise' or user.role == 'admin' %}
+                            <a href="{% url 'trade:purchase_create' %}" class="btn btn-sm btn-success">
+                                {% if request.session.site_language == 'zh' %}新增采购订单{% else %}Add Purchase Order{% endif %}
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if purchase_orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="30%">{% if request.session.site_language == 'zh' %}订单标题{% else %}Order Title{% endif %}</th>
+                                        <th width="15%">{% if request.session.site_language == 'zh' %}所属行业{% else %}Industry{% endif %}</th>
+                                        <th width="10%">{% if request.session.site_language == 'zh' %}订单状态{% else %}Order Status{% endif %}</th>
+                                        <th width="15%">{% if request.session.site_language == 'zh' %}发布时间{% else %}Publish Time{% endif %}</th>
+                                        <th width="20%">{% if request.session.site_language == 'zh' %}操作{% else %}Actions{% endif %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in purchase_orders %}
+                                        <tr>
+                                            <td>{{ order.title }}</td>
+                                            <td>
+                                                {% if order.industry.name %}
+                                                    {{ order.industry.name }}
+                                                {% else %}
+                                                    {% if request.session.site_language == 'zh' %}未分类{% else %}Uncategorized{% endif %}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge {% if order.status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                                                    {% if order.get_status_display %}
+                                                        {{ order.get_status_display }}
+                                                    {% else %}
+                                                        {% if request.session.site_language == 'zh' %}待处理{% else %}Pending{% endif %}
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                            <td>{{ order.create_time|date:"Y-m-d H:i" }}</td>
+                                            <td>
+                                                <a href="{% url 'trade:order_detail' order.id %}" class="btn btn-sm btn-outline-primary me-1">
+                                                    {% if request.session.site_language == 'zh' %}查看{% else %}View{% endif %}
+                                                </a>
+                                                {% if user.is_audited %}
+                                                    {% if user == order.user and user.role == 'enterprise' or user.role == 'admin' %}
+                                                        <a href="{% url 'trade:order_edit' order.id %}" class="btn btn-sm btn-warning me-1">
+                                                            {% if request.session.site_language == 'zh' %}编辑{% else %}Edit{% endif %}
+                                                        </a>
+                                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ order.id }}">
+                                                            {% if request.session.site_language == 'zh' %}删除{% else %}Delete{% endif %}
+                                                        </button>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <!-- Delete confirmation modal -->
+                                        <div class="modal fade" id="deleteModal{{ order.id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-sm">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h6 class="modal-title">{% if request.session.site_language == 'zh' %}确认删除{% else %}Confirm Deletion{% endif %}</h6>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p class="mb-0">
+                                                            {% if request.session.site_language == 'zh' %}
+                                                                确定删除「{{ order.title }}」？
+                                                            {% else %}
+                                                                Are you sure to delete "{{ order.title }}"?
+                                                            {% endif %}
+                                                        </p>
+                                                        <small class="text-danger">{% if request.session.site_language == 'zh' %}此操作不可恢复！{% else %}This operation cannot be undone!{% endif %}</small>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+                                                            {% if request.session.site_language == 'zh' %}取消{% else %}Cancel{% endif %}
+                                                        </button>
+                                                        <form action="{% url 'trade:order_delete' order.id %}" method="post" class="d-inline">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                                {% if request.session.site_language == 'zh' %}删除{% else %}Delete{% endif %}
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-box-seam" style="font-size: 4rem;"></i>
+                            <p class="mt-3 fs-5">{% if request.session.site_language == 'zh' %}暂无采购订单{% else %}No purchase orders yet{% endif %}</p>
+                            {% if user.is_authenticated and user.is_audited %}
+                                {% if user.role == 'enterprise' or user.role == 'admin' %}
+                                    <a href="{% url 'trade:purchase_create' %}" class="btn btn-primary mt-2">
+                                        {% if request.session.site_language == 'zh' %}发布第一条采购订单{% else %}Publish Your First Purchase Order{% endif %}
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <p class="mt-2 text-sm">{% if request.session.site_language == 'zh' %}审核通过后可发布订单{% else %}You can publish orders after being audited{% endif %}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS CDN (for tabs and modals) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap Icons CDN (for empty state icon) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Custom styles (retained from original) -->
+<style>
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.nav-tabs .nav-link.active {
+    background-color: #0d6efd;
+    color: white !important;
+    border-color: #0d6efd;
+}
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
+}
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}

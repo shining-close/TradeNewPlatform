@@ -1,108 +1,106 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="zh-CN">
+<!-- Auto switch html lang attribute based on session language setting -->
+<html lang="{% if request.session.site_language == 'zh' %}zh-CN{% else %}en{% endif %}">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}中俄贸易平台-管理后台{% endblock %}</title>
-    <!-- 修复：Bootstrap链接加引号，确保样式加载 -->
+    <!-- Page title with bilingual support -->
+    <title>{% block title %}
+        {% if request.session.site_language == 'zh' %}中俄贸易平台-管理后台{% else %}China-Russia Trade Platform - Admin Backend{% endif %}
+    {% endblock %}</title>
+    <!-- Bootstrap CSS framework -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 管理员端独立静态文件（保留） -->
+    <!-- Admin panel custom style sheet -->
     <link rel="stylesheet" href="{% static 'administrator/css/admin_style.css' %}">
 </head>
 <body>
-    <!-- 顶部导航（修复所有class属性引号） -->
+    <!-- Top navigation bar -->
     <nav class="navbar navbar-dark bg-primary mb-4">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'administrator:dashboard' %}">中俄贸易平台 - 管理后台</a>
+            <!-- Platform name (bilingual) -->
+            <a class="navbar-brand" href="{% url 'administrator:dashboard' %}">
+                {% if request.session.site_language == 'zh' %}中俄贸易平台 - 管理后台{% else %}China-Russia Trade Platform - Admin Backend{% endif %}
+            </a>
             <div class="d-flex gap-3 align-items-center">
-                <span class="text-white">当前管理员：{{ user.username }}</span>
-                <!-- 修复：按钮样式+引号，跳转功能正常且样式统一 -->
-                <a href="{% url 'trade:index' %}" class="btn btn-outline-light btn-sm" target="_blank">
-                    前往用户端
+                <!-- Current admin display (bilingual) -->
+                <span class="text-white">
+                    {% if request.session.site_language == 'zh' %}当前管理员：{% else %}Current Admin：{% endif %}{{ user.username }}
+                </span>
+                <!-- Language switch buttons (new added) -->
+                <a href="{% url 'trade:switch_language' %}?lang=zh&next={{ request.path }}" class="btn btn-outline-light btn-sm">
+                    简体中文
                 </a>
-                <a href="{% url 'trade:logout' %}" class="btn btn-outline-light btn-sm">退出登录</a>
+                <a href="{% url 'trade:switch_language' %}?lang=en&next={{ request.path }}" class="btn btn-outline-light btn-sm">
+                    English
+                </a>
+                <!-- Jump to user front-end button (bilingual) -->
+                <a href="{% url 'trade:index' %}" class="btn btn-outline-light btn-sm" target="_blank">
+                    {% if request.session.site_language == 'zh' %}前往用户端{% else %}Go to User Side{% endif %}
+                </a>
+                <!-- Logout button (bilingual) -->
+                <a href="{% url 'trade:logout' %}" class="btn btn-outline-light btn-sm">
+                    {% if request.session.site_language == 'zh' %}退出登录{% else %}Logout{% endif %}
+                </a>
             </div>
         </div>
     </nav>
 
-    <!-- 主内容区（修复所有class属性引号） -->
+    <!-- Main content area -->
     <div class="container">
         <div class="row">
-            <!-- 侧边栏菜单 -->
+            <!-- Sidebar menu -->
             <div class="col-md-3 mb-4">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">功能菜单</h5>
+                        <!-- Sidebar title (bilingual) -->
+                        <h5 class="mb-0">{% if request.session.site_language == 'zh' %}功能菜单{% else %}Function Menu{% endif %}</h5>
                     </div>
                     <div class="list-group list-group-flush">
-                        <a href="{% url 'administrator:dashboard' %}" class="list-group-item list-group-item-action">数据看板</a>
-                        <a href="{% url 'administrator:user_manage' %}" class="list-group-item list-group-item-action">用户管理</a>
-                        <a href="{% url 'administrator:order_manage' %}" class="list-group-item list-group-item-action">订单管理</a>
-                        <a href="{% url 'administrator:transport_manage' %}" class="list-group-item list-group-item-action">物流管理</a>
-                        <a href="{% url 'administrator:news_manage' %}" class="list-group-item list-group-item-action">资讯管理</a>
-                        <a href="{% url 'administrator:company_manage' %}" class="list-group-item list-group-item-action">公司管理</a>
+                        <!-- Sidebar menu items (full bilingual support) -->
+                        <a href="{% url 'administrator:dashboard' %}" class="list-group-item list-group-item-action">
+                            {% if request.session.site_language == 'zh' %}数据看板{% else %}Data Dashboard{% endif %}
+                        </a>
+                        <a href="{% url 'administrator:user_manage' %}" class="list-group-item list-group-item-action">
+                            {% if request.session.site_language == 'zh' %}用户管理{% else %}User Management{% endif %}
+                        </a>
+                        <a href="{% url 'administrator:order_manage' %}" class="list-group-item list-group-item-action">
+                            {% if request.session.site_language == 'zh' %}订单管理{% else %}Order Management{% endif %}
+                        </a>
+                        <a href="{% url 'administrator:transport_manage' %}" class="list-group-item list-group-item-action">
+                            {% if request.session.site_language == 'zh' %}物流管理{% else %}Logistics Management{% endif %}
+                        </a>
+                        <a href="{% url 'administrator:news_manage' %}" class="list-group-item list-group-item-action">
+                            {% if request.session.site_language == 'zh' %}资讯管理{% else %}News Management{% endif %}
+                        </a>
+                        <a href="{% url 'administrator:company_manage' %}" class="list-group-item list-group-item-action">
+                            {% if request.session.site_language == 'zh' %}企业管理{% else %}Company Management{% endif %}
+                        </a>
+                        <a href="{% url 'administrator:industry_manage' %}" class="list-group-item list-group-item-action">
+                            {% if request.session.site_language == 'zh' %}行业分类管理{% else %}Industry Category Management{% endif %}
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <!-- 右侧内容 -->
+            <!-- Main content -->
             <div class="col-md-9">
-                <!-- 消息提示 -->
-                {% if messages %}
-                    {% for msg in messages %}
-                        <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
-                            {{ msg }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-                <!-- 页面内容 -->
+                <!-- Page sub-title (bilingual block for child templates) -->
+                <div class="mb-4">
+                    <h3>{% block sub_title %}
+                        {% if request.session.site_language == 'zh' %}欢迎使用管理后台{% else %}Welcome to Admin Backend{% endif %}
+                    {% endblock %}</h3>
+                </div>
+                <!-- Child template content area -->
                 {% block content %}{% endblock %}
             </div>
         </div>
     </div>
 
-    <!-- 修复：Bootstrap JS链接加引号，确保交互正常 -->
+    <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- 实时字数统计JS（保留） -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const descInput = document.getElementById('description-input');
-        const countDisplay = document.getElementById('char-count');
-        if (descInput && countDisplay) {
-            updateCount();
-            descInput.addEventListener('input', updateCount);
-            function updateCount() {
-                const current = descInput.value.length;
-                const max = descInput.maxLength || 500;
-                countDisplay.textContent = `${current}/${max}`;
-                if (current > max) {
-                    countDisplay.classList.add('text-danger');
-                } else {
-                    countDisplay.classList.remove('text-danger');
-                    countDisplay.classList.add('text-muted');
-                }
-            }
-        }
-    });
-    </script>
+    <!-- Admin custom script -->
+    <script src="{% static 'js/admin_script.js' %}"></script>
+    <!-- Child template custom script block -->
+    {% block script %}{% endblock %}
 </body>
 </html>
-
-<script>
-// 用户名搜索框回车提交
-document.querySelector('input[name="user_keyword"]')?.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        this.form.submit();
-    }
-});
-// 标题搜索框回车提交
-document.querySelector('input[name="title_keyword"]')?.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        this.form.submit();
-    }
-});
-</script>

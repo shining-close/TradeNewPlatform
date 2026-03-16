@@ -1,58 +1,67 @@
 {% extends 'base.html' %}
-
-{% block title %}关于我们 - {{ system_info.name }}{% endblock %}
+{% block title %}
+    {% if request.session.site_language == 'zh' %}
+        关于我们 - {{ system_info.name }}
+    {% else %}
+        About Us - {{ system_info.name }}
+    {% endif %}
+{% endblock %}
 
 {% block content %}
+<!-- Main content container: About Us page (system info + contact + description) -->
 <div class="container py-5">
-    <!-- 页面标题 -->
+    <!-- Page header -->
     <div class="bg-primary text-white py-4 mb-5 text-center">
-        <h2 class="mb-0">关于我们</h2>
+        <h2 class="mb-0">{% if request.session.site_language == 'zh' %}关于我们{% else %}About Us{% endif %}</h2>
     </div>
 
-    <!-- 关于我们核心内容 -->
+    <!-- Core content: System info + contact + description -->
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
-            <!-- 系统名称 -->
+            <!-- System name card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary"><i class="bi bi-building-fill me-2"></i>系统名称</h5>
+                    <h5 class="mb-0 text-primary"><i class="bi bi-building-fill me-2"></i>{% if request.session.site_language == 'zh' %}系统名称{% else %}System Name{% endif %}</h5>
                 </div>
                 <div class="card-body">
                     <p class="fs-4 text-center">{{ system_info.name }}</p>
                 </div>
             </div>
 
-            <!-- 联系方式 -->
+            <!-- Contact information card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary"><i class="bi bi-telephone-fill me-2"></i>联系方式</h5>
+                    <h5 class="mb-0 text-primary"><i class="bi bi-telephone-fill me-2"></i>{% if request.session.site_language == 'zh' %}联系方式{% else %}Contact Information{% endif %}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-4">
+                        <!-- Office address -->
                         <div class="col-md-6">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-geo-alt-fill text-danger fs-4 me-3"></i>
                                 <div>
-                                    <h6 class="mb-1">办公地址</h6>
+                                    <h6 class="mb-1">{% if request.session.site_language == 'zh' %}办公地址{% else %}Office Address{% endif %}</h6>
                                     <p class="mb-0 text-muted">{{ system_info.address }}</p>
                                 </div>
                             </div>
                         </div>
+                        <!-- Contact phone -->
                         <div class="col-md-6">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-phone-fill text-success fs-4 me-3"></i>
                                 <div>
-                                    <h6 class="mb-1">联系电话</h6>
+                                    <h6 class="mb-1">{% if request.session.site_language == 'zh' %}联系电话{% else %}Contact Phone{% endif %}</h6>
                                     <p class="mb-0 text-muted">{{ system_info.phone }}</p>
                                 </div>
                             </div>
                         </div>
+                        <!-- Official email (show only if exists) -->
                         {% if system_info.email %}
                         <div class="col-md-12">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-envelope-fill text-info fs-4 me-3"></i>
                                 <div>
-                                    <h6 class="mb-1">官方邮箱</h6>
+                                    <h6 class="mb-1">{% if request.session.site_language == 'zh' %}官方邮箱{% else %}Official Email{% endif %}</h6>
                                     <p class="mb-0 text-muted">{{ system_info.email }}</p>
                                 </div>
                             </div>
@@ -62,10 +71,10 @@
                 </div>
             </div>
 
-            <!-- 系统简介 -->
+            <!-- System description card -->
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary"><i class="bi bi-info-circle-fill me-2"></i>系统简介</h5>
+                    <h5 class="mb-0 text-primary"><i class="bi bi-info-circle-fill me-2"></i>{% if request.session.site_language == 'zh' %}系统简介{% else %}System Description{% endif %}</h5>
                 </div>
                 <div class="card-body">
                     <p class="text-muted fs-6 lh-lg">{{ system_info.description }}</p>

@@ -1,116 +1,258 @@
 {% extends 'base.html' %}
-
-{% block title %}{% if flag == '2' %}采购需求{% else %}供应信息{% endif %} - 中俄贸易平台{% endblock %}
+{% block title %}
+    {% if request.session.site_language == 'zh' %}
+        {% if flag == '2' %}国际采购订单{% else %}国际供应订单{% endif %} - 跨国贸易平台
+    {% else %}
+        {% if flag == '2' %}International Purchase Orders{% else %}International Supply Orders{% endif %} - Cross-border Trade Platform
+    {% endif %}
+{% endblock %}
 
 {% block content %}
+<!-- Main content container: Order list page (purchase/supply orders) -->
 <div class="container py-4">
-    <!-- 页面标题 -->
+    <!-- Page header: Distinguish between purchase and supply orders -->
     <div class="bg-primary text-white py-4 mb-4 text-center">
-        <h2 class="mb-0">{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}</h2>
+        <h2 class="mb-0">
+            {% if request.session.site_language == 'zh' %}
+                {% if flag == '2' %}国际采购订单{% else %}国际供应订单{% endif %}
+            {% else %}
+                {% if flag == '2' %}International Purchase Orders{% else %}International Supply Orders{% endif %}
+            {% endif %}
+        </h2>
     </div>
 
-    <!-- 切换/发布按钮 -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-4">
-                    <a href="{% url 'trade:order_list' %}?flag=1" class="btn {% if flag == '1' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
-                        供应信息
+    <!-- Search bar + industry filter + publish button -->
+    <div class="row mb-4 align-items-center">
+        <!-- Search box + industry filter -->
+        <div class="col-md-8">
+            <form method="get" action="" class="d-flex gap-2" id="orderSearchForm">
+                <!-- Keyword search -->
+                <input
+                    type="text"
+                    name="keyword"
+                    class="form-control"
+                    placeholder="{% if request.session.site_language == 'zh' %}搜索订单名/发布人{% else %}Search order name/publisher{% endif %}"
+                    value="{{ keyword|default:'' }}"
+                >
+                <!-- Industry filter dropdown (auto-submit on select) -->
+                <select name="industry_id" class="form-select" id="industrySelect" onchange="document.getElementById('orderSearchForm').submit()">
+                    <option value="">
+                        {% if request.session.site_language == 'zh' %}所有行业{% else %}All Industries{% endif %}
+                    </option>
+                    {% for industry in industries %}
+                        <option value="{{ industry.id }}" {% if request.GET.industry_id == industry.id|stringformat:"i" %}selected{% endif %}>
+                            {{ industry.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    {% if request.session.site_language == 'zh' %}搜索{% else %}Search{% endif %}
+                </button>
+                <!-- Clear filter button: Clear keyword and industry -->
+                {% if request.GET.keyword or request.GET.industry_id %}
+                <a href="{% if flag == '2' %}{% url 'trade:purchase_list' %}{% else %}{% url 'trade:supply_list' %}{% endif %}" class="btn btn-outline-secondary">
+                    {% if request.session.site_language == 'zh' %}清空筛选{% else %}Clear Filters{% endif %}
+                </a>
+                {% endif %}
+            </form>
+        </div>
+        <!-- Publish button: Only visible to audited enterprises/admins -->
+        <div class="col-md-4 text-end">
+            {% if user.is_authenticated and user.is_audited %}
+                {% if user.role == 'enterprise' or user.role == 'admin' %}
+                    <a href="{% if flag == '2' %}{% url 'trade:purchase_create' %}{% else %}{% url 'trade:supply_create' %}{% endif %}" class="btn btn-success">
+                        {% if request.session.site_language == 'zh' %}
+                            新增{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}
+                        {% else %}
+                            Add {% if flag == '2' %}Purchase Requirement{% else %}Supply Information{% endif %}
+                        {% endif %}
                     </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="{% url 'trade:order_list' %}?flag=2" class="btn {% if flag == '2' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
-                        采购需求
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="{% url 'trade:order_create' %}?flag={{ flag }}" class="btn btn-success w-100">
-                        发布{% if flag == '1' %}供应信息{% else %}采购需求{% endif %}
-                    </a>
-                </div>
-            </div>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 
-    <!-- 订单列表 -->
+    <!-- Order list main content -->
     <div class="row g-4">
         {% for order in orders %}
-        <div class="col-12">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h5 class="card-title text-primary mb-0">{{ order.title }}</h5>
-                        {% if order.status == 'completed' %}
-                            <span class="badge bg-success">{{ order.get_status_display }}</span>
-                        {% else %}
-                            <span class="badge bg-warning">{{ order.get_status_display }}</span>
-                        {% endif %}
-                    </div>
-                    <p class="card-text mb-3">{{ order.content|truncatechars:200 }}</p>
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <span class="badge bg-info">{{ order.get_flag_display }}</span>
-                        <span class="badge bg-secondary">{{ order.category|default:"未分类" }}</span>
-                        <span class="badge bg-dark text-white">{{ order.create_time|date:"Y-m-d" }}</span>
-                        {% if order.end_time %}
-                        <span class="badge bg-danger">截止：{{ order.end_time|date:"Y-m-d" }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted">发布人：{{ order.user.username }}</span>
-
-                        <a href="{% url 'trade:order_detail' order.id %}" class="btn btn-sm btn-outline-primary">查看详情</a>
+            <div class="col-12">
+                <div class="card shadow-sm h-100 transition-all hover:shadow-lg">
+                    <div class="card-body">
+                        <!-- Order title + status badge -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title text-primary mb-0">{{ order.title }}</h5>
+                            <span class="badge {% if order.status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                                {{ order.get_status_display|default:'' }}
+                                {% if not order.get_status_display %}
+                                    {% if request.session.site_language == 'zh' %}待处理{% else %}Pending{% endif %}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <!-- Order summary (truncated display) -->
+                        <p class="card-text mb-3 text-muted">
+                            {{ order.content|truncatechars:200 }}
+                        </p>
+                        <!-- Order tags: Type/Category/Time/Deadline -->
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-info">{{ order.get_flag_display }}</span>
+                            <span class="badge bg-secondary">
+                                {% if order.industry.name %}
+                                    {{ order.industry.name }}
+                                {% else %}
+                                    {% if request.session.site_language == 'zh' %}未分类{% else %}Uncategorized{% endif %}
+                                {% endif %}
+                            </span>
+                            <span class="badge bg-dark text-white">{{ order.create_time|date:"Y-m-d H:i" }}</span>
+                            {% if order.end_time %}
+                                <span class="badge bg-danger">
+                                    {% if request.session.site_language == 'zh' %}截止：{% else %}Deadline：{% endif %}{{ order.end_time|date:"Y-m-d" }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        <!-- Publisher information -->
+                        <div class="mb-3">
+                            <span class="text-muted">
+                                {% if request.session.site_language == 'zh' %}发布人：{% else %}Publisher：{% endif %}
+                            </span>
+                            <span class="fw-bold">{{ order.user.username }}</span>
+                        </div>
+                        <!-- Operation buttons: View details + Edit -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'trade:order_detail' order.id %}" class="btn btn-sm btn-outline-primary">
+                                {% if request.session.site_language == 'zh' %}查看详情{% else %}View Details{% endif %}
+                            </a>
+                            {% if user.is_audited %}
+                                {% if user == order.user and user.role == 'enterprise' or user.role == 'admin' %}
+                                    <a href="{% url 'trade:order_edit' order.id %}" class="btn btn-sm btn-warning">
+                                        {% if request.session.site_language == 'zh' %}编辑订单{% else %}Edit Order{% endif %}
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
         {% empty %}
-        <div class="col-12 text-center py-5">
-            <p class="text-muted fs-5">暂无{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}，快去发布第一条吧！</p>
+            <!-- Empty list prompt -->
+            <div class="col-12 text-center py-5">
+                <div class="mb-3 text-muted">
+                    <i class="bi bi-inbox-empty" style="font-size: 4rem;"></i>
+                </div>
+                {% if request.GET.keyword or request.GET.industry_id %}
+                    <p class="text-muted fs-5">
+                        {% if request.session.site_language == 'zh' %}
+                            未找到{% if request.GET.industry_id %}【{{ selected_industry.name }}】行业{% endif %}{% if request.GET.keyword %}包含「{{ keyword }}」{% endif %}的{% if flag == '2' %}采购订单{% else %}供应订单{% endif %}
+                        {% else %}
+                            No {% if flag == '2' %}purchase orders{% else %}supply orders{% endif %}
+                            {% if request.GET.industry_id %}in 【{{ selected_industry.name }}】 industry{% endif %}
+                            {% if request.GET.keyword %}containing "{{ keyword }}"{% endif %} found
+                        {% endif %}
+                    </p>
+                    <a href="{% if flag == '2' %}{% url 'trade:purchase_list' %}{% else %}{% url 'trade:supply_list' %}{% endif %}" class="btn btn-primary mt-2">
+                        {% if request.session.site_language == 'zh' %}清空筛选{% else %}Clear Filters{% endif %}
+                    </a>
+                {% else %}
+                    <p class="text-muted fs-5">
+                        {% if request.session.site_language == 'zh' %}
+                            暂无{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}
+                        {% else %}
+                            No {% if flag == '2' %}purchase requirements{% else %}supply information{% endif %} available
+                        {% endif %}
+                    </p>
+                    <!-- Publish button for empty list -->
+                    {% if user.is_authenticated and user.is_audited %}
+                        {% if user.role == 'enterprise' or user.role == 'admin' %}
+                            <a href="{% if flag == '2' %}{% url 'trade:purchase_create' %}{% else %}{% url 'trade:supply_create' %}{% endif %}" class="btn btn-primary mt-2">
+                                {% if request.session.site_language == 'zh' %}
+                                    发布第一条{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}
+                                {% else %}
+                                    Publish the first {% if flag == '2' %}purchase requirement{% else %}supply information{% endif %}
+                                {% endif %}
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination control (fixed EmptyPage error) -->
+    {% if orders.paginator.num_pages > 1 %}
+    <nav class="mt-5" aria-label="Order pagination">
+        <ul class="pagination justify-content-center">
+            <!-- Previous page -->
+            <li class="page-item {% if not orders.has_previous %}disabled{% endif %}">
+                {% if orders.has_previous %}
+                    <a class="page-link" href="?page={{ orders.previous_page_number }}{% if request.GET.keyword %}&keyword={{ request.GET.keyword }}{% endif %}{% if request.GET.industry_id %}&industry_id={{ request.GET.industry_id }}{% endif %}" tabindex="-1">
+                        {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
+                    </a>
+                {% else %}
+                    <span class="page-link" tabindex="-1">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span>
+                {% endif %}
+            </li>
+
+            <!-- Page numbers (show 2 pages before/after current) -->
+            {% for num in orders.paginator.page_range %}
+                {% if num >= orders.number|add:-2 and num <= orders.number|add:2 %}
+                    <li class="page-item {% if num == orders.number %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.keyword %}&keyword={{ request.GET.keyword }}{% endif %}{% if request.GET.industry_id %}&industry_id={{ request.GET.industry_id }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Next page -->
+            <li class="page-item {% if not orders.has_next %}disabled{% endif %}">
+                {% if orders.has_next %}
+                    <a class="page-link" href="?page={{ orders.next_page_number }}{% if request.GET.keyword %}&keyword={{ request.GET.keyword }}{% endif %}{% if request.GET.industry_id %}&industry_id={{ request.GET.industry_id }}{% endif %}">
+                        {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
+                    </a>
+                {% else %}
+                    <span class="page-link">{% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}</span>
+                {% endif %}
+            </li>
+        </ul>
+        <!-- Pagination information -->
+        <div class="text-center mt-2 text-muted">
+            {% if request.session.site_language == 'zh' %}
+                共 {{ orders.paginator.count }} 条记录 | 当前第 {{ orders.number }} 页 / 共 {{ orders.paginator.num_pages }} 页
+            {% else %}
+                Total {{ orders.paginator.count }} records | Page {{ orders.number }} / {{ orders.paginator.num_pages }}
+            {% endif %}
         </div>
-        {% endfor %}
-    </div>
-
-    <!-- 分页控件（核心：处理多页数据） -->
-{% if orders.paginator.num_pages > 1 %}
-<nav class="mt-5" aria-label="Page navigation">
-    <ul class="pagination justify-content-center">
-        <!-- 上一页 -->
-        <li class="page-item {% if not orders.has_previous %}disabled{% endif %}">
-            {% if orders.has_previous %}
-                <a class="page-link" href="?flag={{ flag }}&page={{ orders.previous_page_number }}" tabindex="-1">
-                    上一页
-                </a>
-            {% else %}
-                <span class="page-link" tabindex="-1">上一页</span>
-            {% endif %}
-        </li>
-
-        <!-- 页码 -->
-        {% for num in orders.paginator.page_range %}
-            {% if num >= orders.number|add:-2 and num <= orders.number|add:2 %}
-                <li class="page-item {% if num == orders.number %}active{% endif %}">
-                    <a class="page-link" href="?flag={{ flag }}&page={{ num }}">{{ num }}</a>
-                </li>
-            {% endif %}
-        {% endfor %}
-
-        <!-- 下一页 -->
-        <li class="page-item {% if not orders.has_next %}disabled{% endif %}">
-            {% if orders.has_next %}
-                <a class="page-link" href="?flag={{ flag }}&page={{ orders.next_page_number }}">
-                    下一页
-                </a>
-            {% else %}
-                <span class="page-link">下一页</span>
-            {% endif %}
-        </li>
-    </ul>
-    <div class="text-center mt-2 text-muted">
-        共 {{ orders.paginator.count }} 条记录，当前第 {{ orders.number }} 页 / 共 {{ orders.paginator.num_pages }} 页
-    </div>
-</nav>
-{% endif %}
-
-
+    </nav>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+.badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Import Bootstrap Icons -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.js"></script>
 {% endblock %}

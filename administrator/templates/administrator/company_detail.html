@@ -1,74 +1,97 @@
 {% extends 'administrator/base.html' %}
-{% block title %}公司详情 - {{ company.name }}{% endblock %}
+<!-- Page title with bilingual support + company name -->
+{% block title %}
+    {% if request.session.site_language == 'zh' %}公司详情 - {{ company.name }}{% else %}Company Detail - {{ company.name }}{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="mb-0">公司详情</h4>
+        <!-- Page header title (bilingual) -->
+        <h4 class="mb-0">{% if request.session.site_language == 'zh' %}公司详情{% else %}Company Detail{% endif %}</h4>
         <div class="d-flex gap-2">
+            <!-- Edit button (bilingual) -->
             <a href="{% url 'administrator:company_edit' company.id %}" class="btn btn-sm btn-primary">
-                修改信息
+                {% if request.session.site_language == 'zh' %}修改信息{% else %}Edit Info{% endif %}
             </a>
+            <!-- Back to list button (bilingual) -->
             <a href="{% url 'administrator:company_manage' %}" class="btn btn-sm btn-secondary">
-                返回列表
+                {% if request.session.site_language == 'zh' %}返回列表{% else %}Back to List{% endif %}
             </a>
         </div>
     </div>
     <div class="card-body">
         <div class="row">
-            <!-- 左侧：公司基本信息 -->
+            <!-- Left: Company basic information -->
             <div class="col-md-8">
                 <div class="mb-4">
-                    <h5 class="text-primary">📌 基本信息</h5>
+                    <h5 class="text-primary">📌 {% if request.session.site_language == 'zh' %}基本信息{% else %}Basic Information{% endif %}</h5>
                     <table class="table table-borderless">
                         <tr>
-                            <td width="120" class="fw-bold">公司名称：</td>
+                            <td width="120" class="fw-bold">{% if request.session.site_language == 'zh' %}公司名称：{% else %}Company Name: {% endif %}</td>
                             <td>{{ company.name }}</td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">公司地址：</td>
+                            <td class="fw-bold">{% if request.session.site_language == 'zh' %}公司地址：{% else %}Company Address: {% endif %}</td>
                             <td>{{ company.address }}</td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">联系电话：</td>
+                            <td class="fw-bold">{% if request.session.site_language == 'zh' %}联系电话：{% else %}Contact Phone: {% endif %}</td>
                             <td>{{ company.phone }}</td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">联系人：</td>
-                            <td>{{ company.contact_person|default:"未填写" }}</td>
+                            <td class="fw-bold">{% if request.session.site_language == 'zh' %}联系人：{% else %}Contact Person: {% endif %}</td>
+                            <td>
+                                {% if company.contact_person %}
+                                    {{ company.contact_person }}
+                                {% else %}
+                                    {% if request.session.site_language == 'zh' %}未填写{% else %}Not Filled{% endif %}
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">合作物流：</td>
-                            <td>{{ company.transport|default:"未填写" }}</td>
+                            <td class="fw-bold">{% if request.session.site_language == 'zh' %}合作物流：{% else %}Cooperative Logistics: {% endif %}</td>
+                            <td>
+                                {% if company.transport %}
+                                    {{ company.transport }}
+                                {% else %}
+                                    {% if request.session.site_language == 'zh' %}未填写{% else %}Not Filled{% endif %}
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">创建时间：</td>
+                            <td class="fw-bold">{% if request.session.site_language == 'zh' %}创建时间：{% else %}Creation Time: {% endif %}</td>
                             <td>{{ company.create_time|date:"Y-m-d H:i" }}</td>
                         </tr>
                     </table>
                 </div>
-
+                <!-- Company introduction section -->
                 <div class="mb-4">
-                    <h5 class="text-primary">📄 公司简介</h5>
+                    <h5 class="text-primary">📄 {% if request.session.site_language == 'zh' %}公司简介{% else %}Company Introduction{% endif %}</h5>
                     <div class="p-3 bg-light rounded">
-                        {{ company.intro|default:"暂无简介" }}
+                        {% if company.intro %}
+                            {{ company.intro }}
+                        {% else %}
+                            {% if request.session.site_language == 'zh' %}暂无简介{% else %}No Introduction{% endif %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
-
-            <!-- 右侧：公司图片 -->
+            <!-- Right: Company image -->
             <div class="col-md-4">
-                <h5 class="text-primary">🖼️ 公司图片</h5>
+                <h5 class="text-primary">🖼️ {% if request.session.site_language == 'zh' %}公司图片{% else %}Company Image{% endif %}</h5>
                 {% if company.image %}
                 <div class="text-center">
-                    <img src="{{ company.image.url }}" 
-                         class="img-fluid rounded shadow" 
-                         style="max-height: 300px; object-fit: cover;" 
+                    <img src="{{ company.image.url }}"
+                         class="img-fluid rounded shadow"
+                         style="max-height: 300px; object-fit: cover;"
                          alt="{{ company.name }}">
                 </div>
                 {% else %}
+                <!-- No image placeholder (bilingual) -->
                 <div class="text-center text-muted py-5 bg-light rounded">
                     <i class="fas fa-image fa-3x mb-2"></i>
-                    <p>暂无公司图片</p>
+                    <p>{% if request.session.site_language == 'zh' %}暂无公司图片{% else %}No Company Image{% endif %}</p>
                 </div>
                 {% endif %}
             </div>

@@ -1,16 +1,58 @@
 {% extends 'base.html' %}
-{% block title %}个人中心 - {{ user.username }}{% endblock %}
+{% block title %}
+    {% if request.session.site_language == 'zh' %}
+        个人中心 - {{ user.username }}
+    {% else %}
+        Personal Center - {{ user.username }}
+    {% endif %}
+{% endblock %}
+
 {% block content %}
+<!-- Main content container: Personal center (sidebar navigation + profile edit) -->
 <div class="container py-4">
-    <!-- 页面标题 -->
+    <!-- Page header -->
     <div class="bg-primary text-white py-4 mb-4 text-center">
-        <h2 class="mb-0">个人中心</h2>
+        <h2 class="mb-0">{% if request.session.site_language == 'zh' %}个人中心{% else %}Personal Center{% endif %}</h2>
     </div>
+
+    <!-- Layout: Sidebar navigation + main content -->
     <div class="row justify-content-center">
+        <!-- Sidebar: Notification center, my orders, my collections -->
+        <div class="col-md-3 col-lg-2 mb-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <a href="{% url 'trade:notification_center' %}" class="text-decoration-none text-dark d-block w-100">
+                                <i class="bi bi-bell me-2"></i>{% if request.session.site_language == 'zh' %}通知中心{% else %}Notification Center{% endif %}
+                                <span class="badge bg-light text-dark float-end">{{ unread_notification_count }}</span>
+                            </a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="{% url 'trade:my_orders' %}" class="text-decoration-none text-dark d-block w-100">
+                                <i class="bi bi-cart-checkout me-2"></i>{% if request.session.site_language == 'zh' %}我的订单{% else %}My Orders{% endif %}
+                            </a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="{% url 'trade:my_collections' %}" class="text-decoration-none text-dark d-block w-100">
+                                <i class="bi bi-star me-2"></i>{% if request.session.site_language == 'zh' %}我的收藏{% else %}My Collections{% endif %}
+                            </a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="{% url 'trade:index' %}" class="text-decoration-none text-dark d-block w-100">
+                                <i class="bi bi-house me-2"></i>{% if request.session.site_language == 'zh' %}返回首页{% else %}Back to Home{% endif %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content: Profile edit form -->
         <div class="col-md-8 col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <!-- 提示消息 -->
+                    <!-- Message prompts (success/error) -->
                     {% if messages %}
                         {% for msg in messages %}
                             <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
@@ -19,115 +61,218 @@
                             </div>
                         {% endfor %}
                     {% endif %}
-                    <form method="post" enctype="multipart/form-data">  <!-- 关键：添加 enctype 支持文件上传 -->
+
+                    <form method="post" enctype="multipart/form-data" id="profileForm">
                         {% csrf_token %}
-                        <!-- 头像上传区域 -->
+                        <!-- Avatar upload section (fixed: bilingual choose file button) -->
                         <div class="mb-4 text-center">
-                            <h5 class="mb-3">用户头像</h5>
-                            <!-- 原有头像展示 -->
+                            <h5 class="mb-3">{% if request.session.site_language == 'zh' %}用户头像{% else %}User Avatar{% endif %}</h5>
                             <div class="mb-3">
                                 <img id="current-avatar"
                                      src="{{ media_url }}{{ user.avatar }}"
-                                     alt="用户头像"
+                                     alt="{% if request.session.site_language == 'zh' %}用户头像{% else %}User Avatar{% endif %}"
                                      class="rounded-circle"
                                      style="width: 120px; height: 120px; object-fit: cover; border: 2px solid #dee2e6;">
                             </div>
-                            <!-- 新增：头像预览区域（默认隐藏，和原有头像样式一致） -->
                             <div id="avatar-preview-box" class="mb-3" style="display: none;">
-                                <p class="form-text mb-2">头像预览</p>
+                                <p class="form-text mb-2">{% if request.session.site_language == 'zh' %}头像预览{% else %}Avatar Preview{% endif %}</p>
                                 <img id="avatar-preview"
                                      src=""
-                                     alt="头像预览"
+                                     alt="{% if request.session.site_language == 'zh' %}头像预览{% else %}Avatar Preview{% endif %}"
                                      class="rounded-circle"
                                      style="width: 120px; height: 120px; object-fit: cover; border: 2px solid #0d6efd;">
                             </div>
-                            <!-- 头像上传按钮 -->
                             <div class="mb-3">
-                                <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
-                                <div class="form-text">支持 jpg/png 格式，建议尺寸 120x120px</div>
-                            </div>
-                        </div>
-                        <!-- 用户名（只读） -->
-                        <div class="mb-3">
-                            <label class="form-label">用户名</label>
-                            <input type="text" class="form-control" value="{{ user.username }}" readonly>
-                            <div class="form-text">用户名不可修改</div>
-                        </div>
-                        <!-- 角色（只读） -->
-                        <div class="mb-3">
-                            <label class="form-label">角色</label>
-                            <input type="text" class="form-control" value="{{ user.get_role_display }}" readonly>
-                            {% if user.role == 'enterprise' %}
+                                <!-- Hidden native file input -->
+                                <input type="file" class="form-control d-none" id="avatar" name="avatar" accept="image/*">
+                                <!-- Custom bilingual choose file button -->
+                                <label for="avatar" class="btn btn-outline-primary" id="avatar-btn">
+                                    {% if request.session.site_language == 'zh' %}选择文件{% else %}Choose File{% endif %}
+                                </label>
+                                <!-- Show selected file name -->
+                                <span id="file-name" class="ms-2 text-muted"></span>
                                 <div class="form-text">
-                                    企业用户状态：
-                                    {% if user.is_audited %}
-                                        <span class="badge bg-success">已审核</span>
+                                    {% if request.session.site_language == 'zh' %}
+                                        支持 jpg/png 格式，建议尺寸 120x120px
                                     {% else %}
-                                        <span class="badge bg-warning">待审核</span>
+                                        Supports jpg/png formats, recommended size 120x120px
                                     {% endif %}
                                 </div>
-                            {% endif %}
+                            </div>
                         </div>
-                        <!-- 手机号 -->
+
+                        <!-- Username (read-only) -->
                         <div class="mb-3">
-                            <label for="phone" class="form-label">手机号</label>
+                            <label class="form-label">{% if request.session.site_language == 'zh' %}用户名{% else %}Username{% endif %}</label>
+                            <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                            <div class="form-text">{% if request.session.site_language == 'zh' %}用户名不可修改{% else %}Username cannot be modified{% endif %}</div>
+                        </div>
+
+                        <!-- User role: Dropdown + required hint -->
+                        <div class="mb-3">
+                            <label class="form-label">{% if request.session.site_language == 'zh' %}用户角色{% else %}User Role{% endif %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="visitor" {% if user.role == 'visitor' %}selected{% endif %}>
+                                    {% if request.session.site_language == 'zh' %}游客{% else %}Visitor{% endif %}
+                                </option>
+                                <option value="enterprise" {% if user.role == 'enterprise' %}selected{% endif %}>
+                                    {% if request.session.site_language == 'zh' %}企业用户{% else %}Enterprise User{% endif %}
+                                </option>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>
+                                    {% if request.session.site_language == 'zh' %}管理员{% else %}Administrator{% endif %}
+                                </option>
+                            </select>
+                            <div class="form-text">
+                                {% if request.session.site_language == 'zh' %}
+                                    选择「企业用户/管理员」需填写<span class="text-danger">公司和职位</span>，提交后待管理员审核通过生效
+                                {% else %}
+                                    Selecting "Enterprise User/Administrator" requires filling in <span class="text-danger">Company and Position</span>, which will take effect after administrator approval
+                                {% endif %}
+                                {% if user.role in 'enterprise,admin' %}
+                                    <br>{% if request.session.site_language == 'zh' %}当前审核状态：{% else %}Current Audit Status：{% endif %}
+                                    {% if user.is_audited %}
+                                        <span class="badge bg-success">{% if request.session.site_language == 'zh' %}已审核{% else %}Audited{% endif %}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{% if request.session.site_language == 'zh' %}待审核{% else %}Pending Audit{% endif %}</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Phone number -->
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">{% if request.session.site_language == 'zh' %}手机号{% else %}Phone Number{% endif %}</label>
                             <input type="text" class="form-control" id="phone" name="phone"
-                                   value="{{ user.phone|default:'' }}" placeholder="请输入手机号">
+                                   value="{{ user.phone|default:'' }}" placeholder="{% if request.session.site_language == 'zh' %}请输入手机号{% else %}Please enter phone number{% endif %}">
                         </div>
-                        <!-- 所属公司 -->
-                        <div class="mb-3">
-                            <label for="company" class="form-label">所属公司</label>
+
+                        <!-- Affiliated company: Show/hide based on role -->
+                        <div class="mb-3" id="companyBox" {% if user.role not in 'enterprise,admin' %}style="display: none;"{% endif %}>
+                            <label for="company" class="form-label">{% if request.session.site_language == 'zh' %}所属公司{% else %}Affiliated Company{% endif %} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="company" name="company"
-                                   value="{{ user.company|default:'' }}" placeholder="请输入所属公司">
+                                   value="{{ user.company|default:'' }}"
+                                   placeholder="{% if request.session.site_language == 'zh' %}请输入所属公司{% else %}Please enter affiliated company{% endif %}"
+                                   {% if user.role in 'enterprise,admin' %}required{% endif %}>
+                            <div class="invalid-feedback">
+                                {% if request.session.site_language == 'zh' %}选择企业用户/管理员时，公司为必填项{% else %}Company is required when selecting Enterprise User/Administrator{% endif %}
+                            </div>
                         </div>
-                        <!-- 职位 -->
-                        <div class="mb-3">
-                            <label for="position" class="form-label">职位</label>
+
+                        <!-- Position: Show/hide based on role -->
+                        <div class="mb-3" id="positionBox" {% if user.role not in 'enterprise,admin' %}style="display: none;"{% endif %}>
+                            <label for="position" class="form-label">{% if request.session.site_language == 'zh' %}职位{% else %}Position{% endif %} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="position" name="position"
-                                   value="{{ user.position|default:'' }}" placeholder="请输入职位">
+                                   value="{{ user.position|default:'' }}"
+                                   placeholder="{% if request.session.site_language == 'zh' %}请输入职位{% else %}Please enter position{% endif %}"
+                                   {% if user.role in 'enterprise,admin' %}required{% endif %}>
+                            <div class="invalid-feedback">
+                                {% if request.session.site_language == 'zh' %}选择企业用户/管理员时，职位为必填项{% else %}Position is required when selecting Enterprise User/Administrator{% endif %}
+                            </div>
                         </div>
-                        <!-- 提交按钮 -->
-<div class="d-grid gap-2">
-    <!-- ✅ 新增：通知中心入口 -->
-    <a href="{% url 'trade:notification_center' %}" class="btn btn-info">
-        通知中心 <span class="badge bg-light text-dark">{{ unread_notification_count }}</span>
-    </a>
-    <button type="submit" class="btn btn-primary">保存修改</button>
-    <a href="{% url 'trade:index' %}" class="btn btn-outline-secondary">返回首页</a>
-</div>
+
+                        <!-- Submit button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                {% if request.session.site_language == 'zh' %}保存修改{% else %}Save Changes{% endif %}
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- 1. 引入jQuery（CDN方式，无需本地下载，放在body末尾） -->
+
+<!-- jQuery CDN (for form logic) -->
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-<!-- 2. 头像上传预览核心jQuery代码 -->
+<!-- Bootstrap Icons CDN (for sidebar icons) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
 <script>
 $(document).ready(function() {
-    // 监听文件选择框的变化（选择/取消图片时触发）
+    // 1. Avatar upload preview logic + show selected file name
     $('#avatar').change(function(e) {
-        // 获取选择的文件
         const file = e.target.files[0];
-        // 判断：是否选择了文件 + 文件是否为图片类型
         if (file && file.type.startsWith('image/')) {
-            // 创建FileReader对象，用于读取图片文件
+            // Show file name
+            $('#file-name').text(file.name);
+            // Show preview
             const reader = new FileReader();
-            // 图片读取完成后执行的回调
             reader.onload = function(e) {
-                // 显示预览区域
                 $('#avatar-preview-box').show();
-                // 将读取的图片Base64地址赋值给预览图
                 $('#avatar-preview').attr('src', e.target.result);
             };
-            // 以Base64格式读取图片文件（适配预览）
             reader.readAsDataURL(file);
         } else {
-            // 未选择文件/选择非图片/取消选择 → 隐藏预览区域
+            // Clear if no file selected
+            $('#file-name').text('');
             $('#avatar-preview-box').hide();
         }
     });
+
+    // 2. Role selection linkage: Show/hide company/position, add/remove required attribute
+    const $role = $('#role');
+    const $companyBox = $('#companyBox');
+    const $positionBox = $('#positionBox');
+    const $company = $('#company');
+    const $position = $('#position');
+    const $form = $('#profileForm');
+
+    function roleChangeHandler() {
+        const selectedRole = $role.val();
+        const isEnterpriseOrAdmin = ['enterprise', 'admin'].includes(selectedRole);
+        $companyBox.toggle(isEnterpriseOrAdmin);
+        $positionBox.toggle(isEnterpriseOrAdmin);
+        $company.prop('required', isEnterpriseOrAdmin);
+        $position.prop('required', isEnterpriseOrAdmin);
+    }
+
+    roleChangeHandler();
+    $role.on('change', roleChangeHandler);
+
+    // 3. Form submission front-end validation
+    $form.on('submit', function(e) {
+        const selectedRole = $role.val();
+        const isEnterpriseOrAdmin = ['enterprise', 'admin'].includes(selectedRole);
+        let isInvalid = false;
+
+        if (isEnterpriseOrAdmin) {
+            if (!$.trim($company.val())) {
+                $company.addClass('is-invalid');
+                isInvalid = true;
+            } else {
+                $company.removeClass('is-invalid');
+            }
+
+            if (!$.trim($position.val())) {
+                $position.addClass('is-invalid');
+                isInvalid = true;
+            } else {
+                $position.removeClass('is-invalid');
+            }
+        }
+
+        if (isInvalid) {
+            e.preventDefault();
+            $('input.is-invalid').first().focus();
+        }
+    });
+
+    // 4. Remove error style when inputting
+    $company.on('input', function() {
+        $(this).removeClass('is-invalid');
+    });
+
+    $position.on('input', function() {
+        $(this).removeClass('is-invalid');
+    });
+
+    // 5. Update avatar button text (bilingual)
+    function updateAvatarButtonText() {
+        const isZh = '{{ request.session.site_language }}' === 'zh';
+        $('#avatar-btn').text(isZh ? '选择文件' : 'Choose File');
+    }
+    updateAvatarButtonText();
 });
 </script>
 {% endblock %}

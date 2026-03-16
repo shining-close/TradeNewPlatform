@@ -1,61 +1,169 @@
 {% extends 'base.html' %}
-
-{% block title %}发布{% if flag == '2' %}采购需求{% else %}供应信息{% endif %} - 中俄贸易平台{% endblock %}
+{% block title %}
+    {{ page_title }} -
+    {% if request.session.site_language == 'zh' %}
+        跨国贸易平台
+    {% else %}
+        Cross-border Trade Platform
+    {% endif %}
+{% endblock %}
 
 {% block content %}
+<!-- Main content container: Order creation page (purchase/supply order form) -->
 <div class="container py-4">
+    <!-- Page header -->
     <div class="bg-primary text-white py-4 mb-4 text-center">
-        <h2 class="mb-0">发布{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}</h2>
+        <h2 class="mb-0">{{ page_title }}</h2>
     </div>
 
+    <!-- Form container (centered layout) -->
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
+        <div class="col-md-8 col-lg-7">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" id="orderForm">
                         {% csrf_token %}
-                        <input type="hidden" name="flag" value="{{ flag }}">
-
-                        <div class="mb-3">
-                            <label for="title" class="form-label">订单标题 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="title" name="title" required>
+                        <!-- Order title (required) -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-bold">{% if request.session.site_language == 'zh' %}订单标题{% else %}Order Title{% endif %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                   placeholder="{% if request.session.site_language == 'zh' %}
+                                       {% if flag == '2' %}采购需求{% else %}供应信息{% endif %}标题（至少5个字）
+                                   {% else %}
+                                       {% if flag == '2' %}Purchase Requirement{% else %}Supply Information{% endif %} Title (at least 5 characters)
+                                   {% endif %}">
+                            <div class="form-text text-muted">
+                                {% if request.session.site_language == 'zh' %}
+                                    标题需清晰描述订单内容，便于识别
+                                {% else %}
+                                    The title should clearly describe the order content for easy identification
+                                {% endif %}
+                            </div>
                         </div>
 
-                        <!-- 新增：订单图片上传 -->
-<div class="mb-3">
-    <label for="image" class="form-label">订单图片（可选）</label>
-    <input type="file" class="form-control" id="image" name="image" accept="image/*">
-    <div class="form-text">支持 jpg/png 格式，建议尺寸 800x600px</div>
-</div>
-
-                        <div class="mb-3">
-                            <label for="category" class="form-label">行业分类</label>
-                            <input type="text" class="form-control" id="category" name="category" placeholder="例如：农产品/机械设备">
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="content" class="form-label">订单详情 <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="content" name="content" rows="6" required></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="end_time" class="form-label">截止时间</label>
-                            <input type="datetime-local" class="form-control" id="end_time" name="end_time">
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="transport" class="form-label">关联物流</label>
-                            <select class="form-select" id="transport" name="transport">
-                                <option value="">不关联</option>
-                                {% for t in transports %}
-                                <option value="{{ t.id }}">{{ t.name }}</option>
+                        <!-- Industry category (dropdown, required) -->
+                        <div class="mb-4">
+                            <label for="industry" class="form-label fw-bold">{% if request.session.site_language == 'zh' %}行业分类{% else %}Industry Category{% endif %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="industry" name="industry" required>
+                                <option value="">
+                                    {% if request.session.site_language == 'zh' %}请选择行业分类{% else %}Please select industry category{% endif %}
+                                </option>
+                                {% for industry in industries %}
+                                <option value="{{ industry.id }}">{{ industry.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">提交发布</button>
-                            <a href="{% url 'trade:order_list' %}?flag={{ flag }}" class="btn btn-outline-secondary">取消返回</a>
+
+                        <!-- Order details (word count limit + real-time statistics) -->
+                        <div class="mb-4">
+                            <label for="content" class="form-label fw-bold">{% if request.session.site_language == 'zh' %}订单详情{% else %}Order Details{% endif %} <span class="text-danger">*</span></label>
+                            <textarea
+                                class="form-control"
+                                id="content"
+                                name="content"
+                                rows="8"
+                                required
+                                maxlength="500"
+                                oninput="updateWordCount(this)"
+                            placeholder="{% if request.session.site_language == 'zh' %}
+                                请详细描述{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}，包括数量、规格、要求等（至少20个字，最多500字）
+                            {% else %}
+                                Please detailedly describe {% if flag == '2' %}purchase requirements{% else %}supply information{% endif %}, including quantity, specifications, requirements, etc. (at least 20 characters, max 500 characters)
+                            {% endif %}"></textarea>
+                            <div class="form-text text-muted d-flex justify-content-between">
+                                <span>
+                                    {% if request.session.site_language == 'zh' %}
+                                        请详细描述订单内容（至少20个字，最多500字）
+                                    {% else %}
+                                        Please detailedly describe the order content (at least 20 characters, max 500 characters)
+                                    {% endif %}
+                                </span>
+                                <span id="word-count">
+                                    {% if request.session.site_language == 'zh' %}当前字数：{% else %}Current Word Count：{% endif %}
+                                    <span id="current-count">0</span> / 500
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Deadline (optional) -->
+                        <div class="mb-4">
+                            <label for="end_time" class="form-label fw-bold">{% if request.session.site_language == 'zh' %}截止时间{% else %}Deadline{% endif %}</label>
+                            <input type="datetime-local" class="form-control" id="end_time" name="end_time">
+                            <div class="form-text text-muted">
+                                {% if request.session.site_language == 'zh' %}
+                                    未填写则无截止时间限制
+                                {% else %}
+                                    No deadline limit if not filled
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Associated logistics (optional) -->
+                        <div class="mb-4">
+                            <label for="transport" class="form-label fw-bold">{% if request.session.site_language == 'zh' %}关联物流服务{% else %}Associated Logistics Service{% endif %}</label>
+                            <select class="form-select" id="transport" name="transport">
+                                <option value="">
+                                    {% if request.session.site_language == 'zh' %}不关联物流服务{% else %}No associated logistics service{% endif %}
+                                </option>
+                                {% for transport in transports %}
+                                <option value="{{ transport.id }}">{{ transport.name }} - {{ transport.price }}元/吨</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Contact phone (optional) -->
+                        <div class="mb-4">
+                            <label for="contact_phone" class="form-label fw-bold">{% if request.session.site_language == 'zh' %}联系电话{% else %}Contact Phone{% endif %}</label>
+                            <input type="text" class="form-control" id="contact_phone" name="contact_phone"
+                                   placeholder="{% if request.session.site_language == 'zh' %}请输入联系电话（选填）{% else %}Please enter contact phone (optional){% endif %}">
+                        </div>
+
+                        <!-- Nationality (optional) -->
+                        <div class="mb-4">
+                            <label for="nationality" class="form-label fw-bold">{% if request.session.site_language == 'zh' %}国籍{% else %}Nationality{% endif %}</label>
+                            <input type="text" class="form-control" id="nationality" name="nationality"
+                                   placeholder="{% if request.session.site_language == 'zh' %}请输入国籍（选填）{% else %}Please enter nationality (optional){% endif %}">
+                        </div>
+
+                        <!-- Local image upload (optional) -->
+                        <div class="mb-4">
+                            <label for="image" class="form-label fw-bold">{% if request.session.site_language == 'zh' %}本地图片上传（可选）{% else %}Local Image Upload (Optional){% endif %}</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                            <div class="form-text text-muted">
+                                {% if request.session.site_language == 'zh' %}
+                                    支持 JPG/PNG 格式，大小不超过 5MB
+                                {% else %}
+                                    Supports JPG/PNG formats, maximum size 5MB
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Network image URL (optional) -->
+                        <div class="mb-4">
+                            <label for="image_url" class="form-label fw-bold">{% if request.session.site_language == 'zh' %}网络图片URL（可选）{% else %}Network Image URL (Optional){% endif %}</label>
+                            <input type="url" class="form-control" id="image_url" name="image_url"
+                                   placeholder="https://example.com/image.jpg">
+                            <div class="form-text text-muted">
+                                {% if request.session.site_language == 'zh' %}
+                                    如果上传了本地图片，此处填写将不生效
+                                {% else %}
+                                    If a local image is uploaded, this field will not take effect
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Submit & Cancel buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                            <a href="{% if flag == '2' %}{% url 'trade:purchase_list' %}{% else %}{% url 'trade:supply_list' %}{% endif %}" class="btn btn-outline-secondary me-md-2">
+                                {% if request.session.site_language == 'zh' %}取消返回{% else %}Cancel & Back{% endif %}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                {% if request.session.site_language == 'zh' %}
+                                    提交{% if flag == '2' %}采购需求{% else %}供应信息{% endif %}
+                                {% else %}
+                                    Submit {% if flag == '2' %}Purchase Requirement{% else %}Supply Information{% endif %}
+                                {% endif %}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -63,4 +171,124 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Word count statistics function
+function updateWordCount(textarea) {
+    const currentCount = textarea.value.length;
+    const maxCount = 500;
+    const countElement = document.getElementById('current-count');
+    const wordCountWrapper = document.getElementById('word-count');
+    // Update word count display
+    countElement.textContent = currentCount;
+    // Highlight in red when exceeding limit
+    if (currentCount > maxCount) {
+        wordCountWrapper.classList.add('text-danger');
+        wordCountWrapper.innerHTML = `
+            {% if request.session.site_language == 'zh' %}
+                当前字数：<span id="current-count">${currentCount}</span> / 500（已超出限制）
+            {% else %}
+                Current Word Count：<span id="current-count">${currentCount}</span> / 500 (Exceeded Limit)
+            {% endif %}
+        `;
+    } else {
+        wordCountWrapper.classList.remove('text-danger');
+        wordCountWrapper.innerHTML = `
+            {% if request.session.site_language == 'zh' %}
+                当前字数：<span id="current-count">${currentCount}</span> / 500
+            {% else %}
+                Current Word Count：<span id="current-count">${currentCount}</span> / 500
+            {% endif %}
+        `;
+    }
+}
+
+// Form real-time validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('orderForm');
+    const title = document.getElementById('title');
+    const content = document.getElementById('content');
+    const industry = document.getElementById('industry');
+    const isZh = '{{ request.session.site_language }}' === 'zh';
+
+    // Title validation
+    title.addEventListener('blur', function() {
+        const errorMsg = isZh ? '标题不能为空且至少5个字符' : 'Title cannot be empty and must be at least 5 characters';
+        validateField(this, val => val.trim().length >= 5, errorMsg);
+    });
+
+    // Content validation (word count range)
+    content.addEventListener('blur', function() {
+        const val = this.value.trim();
+        let errorMsg = '';
+        if (val.length < 20) {
+            errorMsg = isZh ? '详情不能为空且至少20个字符' : 'Details cannot be empty and must be at least 20 characters';
+            validateField(this, () => false, errorMsg);
+        } else if (val.length > 500) {
+            errorMsg = isZh ? '详情最多只能输入500个字符' : 'Details can be at most 500 characters';
+            validateField(this, () => false, errorMsg);
+        } else {
+            validateField(this, () => true, '');
+        }
+    });
+
+    // Industry category validation
+    industry.addEventListener('change', function() {
+        const errorMsg = isZh ? '请选择行业分类' : 'Please select industry category';
+        validateField(this, val => val !== '', errorMsg);
+    });
+
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const contentVal = content.value.trim();
+        const titleErrorMsg = isZh ? '标题不能为空且至少5个字符' : 'Title cannot be empty and must be at least 5 characters';
+        const industryErrorMsg = isZh ? '请选择行业分类' : 'Please select industry category';
+
+        // Title validation
+        if (!validateField(title, val => val.trim().length >= 5, titleErrorMsg)) isValid = false;
+
+        // Content word count validation
+        if (contentVal.length < 20) {
+            const errorMsg = isZh ? '详情不能为空且至少20个字符' : 'Details cannot be empty and must be at least 20 characters';
+            validateField(content, () => false, errorMsg);
+            isValid = false;
+        } else if (contentVal.length > 500) {
+            const errorMsg = isZh ? '详情最多只能输入500个字符' : 'Details can be at most 500 characters';
+            validateField(content, () => false, errorMsg);
+            isValid = false;
+        }
+
+        // Industry category validation
+        if (!validateField(industry, val => val !== '', industryErrorMsg)) isValid = false;
+
+        // Prevent submission if validation fails
+        if (!isValid) {
+            e.preventDefault();
+            const firstError = document.querySelector('.is-invalid');
+            if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    // Universal validation function
+    function validateField(field, condition, errorMsg) {
+        field.classList.remove('is-invalid');
+        const existingError = field.nextElementSibling;
+        if (existingError && existingError.classList.contains('invalid-feedback')) {
+            existingError.remove();
+        }
+        if (!condition(field.value)) {
+            field.classList.add('is-invalid');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            errorDiv.textContent = errorMsg;
+            field.after(errorDiv);
+            return false;
+        }
+        return true;
+    }
+});
+</script>
 {% endblock %}

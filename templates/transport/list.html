@@ -1,42 +1,170 @@
 {% extends 'base.html' %}
-
-{% block title %}国际物流 - 中俄贸易供需服务平台{% endblock %}
+{% block title %}
+    {% if request.session.site_language == 'zh' %}
+        国际物流 - 跨国贸易平台
+    {% else %}
+        International Logistics - Cross-border Trade Platform
+    {% endif %}
+{% endblock %}
 
 {% block content %}
+<!-- Main content container: Logistics list page (search + filter + pagination + logistics cards) -->
 <div class="container py-4">
-    <!-- 页面标题栏 -->
+    <!-- Page header -->
     <div class="bg-primary text-white py-4 mb-4 text-center">
-        <h2 class="mb-0">国际物流</h2>
+        <h2 class="mb-0">{% if request.session.site_language == 'zh' %}国际物流{% else %}International Logistics{% endif %}</h2>
     </div>
 
-    <!-- 物流服务介绍 -->
-    <div class="alert alert-info mb-4">
-        <h5>📦 物流服务说明</h5>
-        <p class="mb-0">我们提供中俄之间的全链路物流解决方案，覆盖海运、空运、陆运，助力企业高效、安全地完成跨境货物运输。</p>
+    <!-- Search + type filter bar -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-center">
+                <!-- Keyword search box -->
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text"
+                               class="form-control"
+                               name="keyword"
+                               placeholder="{% if request.session.site_language == 'zh' %}输入物流名称关键字搜索...{% else %}Enter logistics name keyword to search...{% endif %}"
+                               value="{{ keyword|default:'' }}"
+                               onkeydown="if(event.keyCode===13) this.form.submit()">
+                        <button class="btn btn-primary" type="submit">
+                            {% if request.session.site_language == 'zh' %}搜索{% else %}Search{% endif %}
+                        </button>
+                    </div>
+                </div>
+                <!-- Logistics type filter dropdown (auto-submit on select) -->
+                <div class="col-md-4">
+                    <select class="form-select" name="type" onchange="this.form.submit()">
+                        <option value="">{% if request.session.site_language == 'zh' %}全部类型{% else %}All Types{% endif %}</option>
+                        <option value="空运" {% if type == '空运' %}selected{% endif %}>
+                            {% if request.session.site_language == 'zh' %}空运{% else %}Air Transport{% endif %}
+                        </option>
+                        <option value="海运" {% if type == '海运' %}selected{% endif %}>
+                            {% if request.session.site_language == 'zh' %}海运{% else %}Sea Transport{% endif %}
+                        </option>
+                        <option value="陆运" {% if type == '陆运' %}selected{% endif %}>
+                            {% if request.session.site_language == 'zh' %}陆运{% else %}Land Transport{% endif %}
+                        </option>
+                    </select>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <!-- 物流方案列表 -->
+    <!-- Logistics list cards -->
     <div class="row g-4">
-        {% for transport in transports %}
+        {% for transport in transport_list %}
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm">
+                {% if transport.image %}
+                <img src="{{ transport.image.url }}" class="card-img-top" alt="{{ transport.name }}" style="height: 180px; object-fit: cover;">
+                {% endif %}
                 <div class="card-body">
                     <h5 class="card-title text-primary">{{ transport.name }}</h5>
-                    <p class="card-text text-muted">{{ transport.description|default:"暂无描述" }}</p>
+                    {% if transport.type %}
+                    <span class="badge bg-secondary mb-2">
+                        {% if request.session.site_language == 'zh' %}
+                            {{ transport.type }}
+                        {% else %}
+                            {% if transport.type == '空运' %}Air Transport{% elif transport.type == '海运' %}Sea Transport{% elif transport.type == '陆运' %}Land Transport{% else %}{{ transport.type }}{% endif %}
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                    <p class="card-text text-muted">
+                        {% if transport.description %}
+                            {{ transport.description|truncatechars:100 }}
+                        {% else %}
+                            {% if request.session.site_language == 'zh' %}暂无描述{% else %}No description available{% endif %}
+                        {% endif %}
+                    </p>
                     <ul class="list-unstyled mb-3">
-                        <li><strong>时效：</strong>{{ transport.delivery_time|default:"7-15天" }}</li>
-                        <li><strong>价格：</strong>{{ transport.price|default:"￥XX/公斤" }}</li>
-                        <li><strong>适用范围：</strong>{{ transport.scope|default:"中俄全境" }}</li>
+                        <li>
+                            <strong>{% if request.session.site_language == 'zh' %}时效：{% else %}Time：{% endif %}</strong>
+                            {% if transport.time %}
+                                {{ transport.time }}
+                            {% else %}
+                                {% if request.session.site_language == 'zh' %}7-15天{% else %}7-15 Days{% endif %}
+                            {% endif %}
+                        </li>
+                        <li>
+                            <strong>{% if request.session.site_language == 'zh' %}价格：{% else %}Price：{% endif %}</strong>
+                            {% if transport.price %}
+                                {{ transport.price }}/{% if request.session.site_language == 'zh' %}单位{% else %}Unit{% endif %}
+                            {% else %}
+                                {% if request.session.site_language == 'zh' %}￥XX/单位{% else %}￥XX/Unit{% endif %}
+                            {% endif %}
+                        </li>
+                        <li>
+                            <strong>{% if request.session.site_language == 'zh' %}服务商：{% else %}Service Provider：{% endif %}</strong>
+                            {% if transport.company %}
+                                {{ transport.company }}
+                            {% else %}
+                                {% if request.session.site_language == 'zh' %}合作物流商{% else %}Cooperative Logistics Provider{% endif %}
+                            {% endif %}
+                        </li>
                     </ul>
-                    <a href="#" class="btn btn-sm btn-outline-primary w-100">查看详情</a>
+                    <a href="{% url 'trade:transport_detail' transport.id %}" class="btn btn-sm btn-outline-primary w-100">
+                        {% if request.session.site_language == 'zh' %}查看详情{% else %}View Details{% endif %}
+                    </a>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
-            <p class="text-muted">暂无可用物流方案，敬请期待！</p>
+            <p class="text-muted fs-5">
+                {% if request.session.site_language == 'zh' %}暂无符合条件的物流方案{% else %}No logistics plans matching the criteria{% endif %}
+            </p>
         </div>
         {% endfor %}
     </div>
+
+    <!-- Pagination control -->
+    {% if transport_list.paginator.num_pages > 1 %}
+    <div class="d-flex justify-content-center mt-5">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <!-- Previous page -->
+                {% if transport_list.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ transport_list.previous_page_number }}&keyword={{ keyword }}&type={{ type }}">
+                        {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span>
+                </li>
+                {% endif %}
+
+                <!-- Page numbers -->
+                {% for num in transport_list.paginator.page_range %}
+                    {% if transport_list.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&keyword={{ keyword }}&type={{ type }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next page -->
+                {% if transport_list.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ transport_list.next_page_number }}&keyword={{ keyword }}&type={{ type }}">
+                        {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">{% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

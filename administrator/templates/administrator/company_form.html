@@ -1,93 +1,134 @@
 {% extends 'administrator/base.html' %}
+<!-- Page title: bilingual with add/edit distinguish -->
 {% block title %}
-    {% if is_edit %}修改公司{% else %}新增公司{% endif %} - 管理后台
+    {% if is_edit %}
+        {% if request.session.site_language == 'zh' %}修改公司{% else %}Edit Company{% endif %} - {{ company.name }}
+    {% else %}
+        {% if request.session.site_language == 'zh' %}新增公司{% else %}Add Company{% endif %}
+    {% endif %}
+    - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
 {% endblock %}
+
 {% block content %}
 <div class="card mb-4">
     <div class="card-header">
         <h4 class="mb-0">
-            {% if is_edit %}修改公司（{{ company.name }}）{% else %}新增公司{% endif %}
+            {% if is_edit %}
+                {% if request.session.site_language == 'zh' %}修改公司（{{ company.name }}）{% else %}Edit Company ({{ company.name }}){% endif %}
+            {% else %}
+                {% if request.session.site_language == 'zh' %}新增公司{% else %}Add Company{% endif %}
+            {% endif %}
         </h4>
     </div>
     <div class="card-body">
-        <!-- 关键：添加 enctype="multipart/form-data" 支持文件上传 -->
+        <!-- Form with multipart/form-data for file upload -->
         <form method="post" enctype="multipart/form-data" class="row g-3">
             {% csrf_token %}
+            <!-- Company Name: required field -->
             <div class="col-12">
-                <label class="form-label">公司名称 <span class="text-danger">*</span></label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}公司名称{% else %}Company Name{% endif %}
+                    <span class="text-danger">*</span>
+                </label>
                 <input type="text" name="name" class="form-control" required
                        value="{% if is_edit %}{{ company.name }}{% endif %}">
             </div>
+            <!-- Company Address: required field -->
             <div class="col-12">
-                <label class="form-label">公司地址 <span class="text-danger">*</span></label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}公司地址{% else %}Company Address{% endif %}
+                    <span class="text-danger">*</span>
+                </label>
                 <input type="text" name="address" class="form-control" required
                        value="{% if is_edit %}{{ company.address }}{% endif %}">
             </div>
+            <!-- Contact Phone: required field -->
             <div class="col-md-6">
-                <label class="form-label">联系电话 <span class="text-danger">*</span></label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}联系电话{% else %}Contact Phone{% endif %}
+                    <span class="text-danger">*</span>
+                </label>
                 <input type="text" name="phone" class="form-control" required
                        value="{% if is_edit %}{{ company.phone }}{% endif %}">
             </div>
+            <!-- Contact Person: optional field -->
             <div class="col-md-6">
-                <label class="form-label">联系人（可选）</label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}联系人（可选）{% else %}Contact Person (Optional){% endif %}
+                </label>
                 <input type="text" name="contact_person" class="form-control"
                        value="{% if is_edit %}{{ company.contact_person|default:'' }}{% endif %}">
             </div>
+            <!-- Cooperative Logistics: optional field -->
             <div class="col-12">
-                <label class="form-label">合作物流（可选）</label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}合作物流（可选）{% else %}Cooperative Logistics (Optional){% endif %}
+                </label>
                 <input type="text" name="transport" class="form-control"
                        value="{% if is_edit %}{{ company.transport|default:'' }}{% endif %}">
             </div>
-            <!-- 新增：公司简介（500字限制） -->
+            <!-- Company Introduction: optional, max 500 chars with count -->
             <div class="col-12">
-                <label class="form-label">公司简介（可选，最多500字）</label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}公司简介（可选，最多500字）{% else %}Company Introduction (Optional, Max 500 Chars){% endif %}
+                </label>
                 <textarea name="intro" id="company-intro" class="form-control" rows="5"
                           maxlength="500" oninput="updateIntroCount()">
                     {% if is_edit %}{{ company.intro|default:'' }}{% endif %}
                 </textarea>
                 <div class="form-text text-end">
-                    <span id="intro-count">{% if is_edit %}{{ company.intro|length }}{% else %}0{% endif %}</span>/500 字
+                    <span id="intro-count">{% if is_edit %}{{ company.intro|length }}{% else %}0{% endif %}</span>/500
+                    {% if request.session.site_language == 'zh' %}字{% else %}Chars{% endif %}
                 </div>
             </div>
-            <!-- 新增：公司图片上传 -->
+            <!-- Company Image Upload: optional, support preview for edit -->
             <div class="col-12">
-                <label class="form-label">公司图片（可选）</label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}公司图片（可选）{% else %}Company Image (Optional){% endif %}
+                </label>
                 <input type="file" name="image" class="form-control" accept="image/*">
                 {% if is_edit and company.image %}
                 <div class="mt-2">
-                    <span class="form-text text-muted">当前图片：</span>
+                    <span class="form-text text-muted">
+                        {% if request.session.site_language == 'zh' %}当前图片：{% else %}Current Image: {% endif %}
+                    </span>
                     <img src="{{ company.image.url }}" style="width: 120px; height: 120px; object-fit: cover;" alt="{{ company.name }}">
                 </div>
                 {% endif %}
             </div>
+            <!-- Submit & Cancel Buttons: bilingual -->
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">
-                    {% if is_edit %}保存修改{% else %}新增公司{% endif %}
+                    {% if is_edit %}
+                        {% if request.session.site_language == 'zh' %}保存修改{% else %}Save Changes{% endif %}
+                    {% else %}
+                        {% if request.session.site_language == 'zh' %}新增公司{% else %}Add Company{% endif %}
+                    {% endif %}
                 </button>
-                <a href="{% url 'administrator:company_manage' %}" class="btn btn-secondary ms-2">取消返回</a>
+                <a href="{% url 'administrator:company_manage' %}" class="btn btn-secondary ms-2">
+                    {% if request.session.site_language == 'zh' %}取消返回{% else %}Cancel & Back{% endif %}
+                </a>
             </div>
         </form>
     </div>
 </div>
 
-<!-- 实时字数统计脚本 -->
+<!-- Real-time character count script for company introduction (function unchanged) -->
 <script>
-// 公司简介字数统计+限制
+// Update introduction character count and limit max length
 function updateIntroCount() {
     const intro = document.getElementById('company-intro');
     const count = document.getElementById('intro-count');
     const maxLength = 500;
     let currentLength = intro.value.length;
-
-    // 超出自动截断
+    // Auto truncate if exceed max length
     if (currentLength > maxLength) {
         intro.value = intro.value.substring(0, maxLength);
         currentLength = maxLength;
     }
     count.textContent = currentLength;
 }
-
-// 页面加载初始化
+// Initialize count on page load
 window.onload = function() {
     updateIntroCount();
 };

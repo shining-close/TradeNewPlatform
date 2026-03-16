@@ -1,32 +1,32 @@
 {% extends 'administrator/base.html' %}
 <!-- Page title with bilingual support -->
 {% block title %}
-    {% if request.session.site_language == 'zh' %}公司管理{% else %}Company Management{% endif %} - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
+    {% if request.session.site_language == 'zh' %}行业分类管理{% else %}Industry Category Management{% endif %} - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
         <!-- Page header title (bilingual) -->
-        <h4 class="mb-0">{% if request.session.site_language == 'zh' %}公司管理{% else %}Company Management{% endif %}</h4>
+        <h4 class="mb-0">{% if request.session.site_language == 'zh' %}行业分类管理{% else %}Industry Category Management{% endif %}</h4>
         <div class="d-flex gap-2 mt-2 mt-md-0">
             <!-- Search form: bilingual placeholder & buttons -->
             <form method="get" class="d-flex gap-1">
                 <input type="text" name="keyword" class="form-control form-control-sm"
-                       placeholder="{% if request.session.site_language == 'zh' %}搜索公司名称{% else %}Search Company Name{% endif %}"
+                       placeholder="{% if request.session.site_language == 'zh' %}搜索行业名称{% else %}Search Industry Name{% endif %}"
                        value="{{ current_keyword }}">
                 <button type="submit" class="btn btn-sm btn-primary">
                     {% if request.session.site_language == 'zh' %}搜索{% else %}Search{% endif %}
                 </button>
                 {% if current_keyword %}
-                    <a href="{% url 'administrator:company_manage' %}" class="btn btn-sm btn-outline-secondary">
+                    <a href="{% url 'administrator:industry_manage' %}" class="btn btn-sm btn-outline-secondary">
                         {% if request.session.site_language == 'zh' %}清空{% else %}Clear{% endif %}
                     </a>
                 {% endif %}
             </form>
-            <!-- Add company button (bilingual) -->
-            <a href="{% url 'administrator:company_add' %}" class="btn btn-sm btn-primary">
-                + {% if request.session.site_language == 'zh' %}新增公司{% else %}Add Company{% endif %}
+            <!-- Add industry button (bilingual) -->
+            <a href="{% url 'administrator:industry_add' %}" class="btn btn-sm btn-primary">
+                + {% if request.session.site_language == 'zh' %}新增行业{% else %}Add Industry{% endif %}
             </a>
         </div>
     </div>
@@ -36,37 +36,28 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>{% if request.session.site_language == 'zh' %}公司名称{% else %}Company Name{% endif %}</th>
-                        <th>{% if request.session.site_language == 'zh' %}联系电话{% else %}Contact Phone{% endif %}</th>
-                        <th>{% if request.session.site_language == 'zh' %}联系人{% else %}Contact Person{% endif %}</th>
-                        <th>{% if request.session.site_language == 'zh' %}合作物流{% else %}Cooperative Logistics{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}行业名称{% else %}Industry Name{% endif %}</th>
+                        <th>{% if request.session.site_language == 'zh' %}行业描述{% else %}Industry Description{% endif %}</th>
                         <th>{% if request.session.site_language == 'zh' %}创建时间{% else %}Creation Time{% endif %}</th>
                         <th>{% if request.session.site_language == 'zh' %}操作{% else %}Actions{% endif %}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for company in companies %}
+                    {% for industry in industries %}
                     <tr>
-                        <td>{{ company.id }}</td>
-                        <td>
-                            <a href="{% url 'administrator:company_detail' company.id %}" class="text-primary fw-bold">
-                                {{ company.name }}
-                            </a>
-                        </td>
-                        <td>{{ company.phone }}</td>
-                        <!-- Contact person: default '-' for empty value (unified for both languages) -->
-                        <td>{{ company.contact_person|default:"-" }}</td>
-                        <!-- Cooperative logistics: default '-' for empty value -->
-                        <td>{{ company.transport|default:"-" }}</td>
-                        <td>{{ company.create_time|date:"Y-m-d" }}</td>
+                        <td>{{ industry.id }}</td>
+                        <td>{{ industry.name }}</td>
+                        <!-- Industry description: truncate + default '-' (unified for both languages) -->
+                        <td>{{ industry.desc|truncatechars:30|default:"-" }}</td>
+                        <td>{{ industry.create_time|date:"Y-m-d" }}</td>
                         <td class="d-flex gap-2">
                             <!-- Edit button (bilingual) -->
-                            <a href="{% url 'administrator:company_edit' company.id %}" class="btn btn-sm btn-outline-primary">
+                            <a href="{% url 'administrator:industry_edit' industry.id %}" class="btn btn-sm btn-outline-primary">
                                 {% if request.session.site_language == 'zh' %}修改{% else %}Edit{% endif %}
                             </a>
                             <!-- Delete button: bilingual text + confirm prompt -->
-                            <a href="{% url 'administrator:company_delete' company.id %}" class="btn btn-sm btn-danger"
-                               onclick="return confirm('{% if request.session.site_language == 'zh' %}确定删除「{{ company.name }}」？删除后不可恢复！{% else %}Are you sure to delete «{{ company.name }}»? Deletion is irreversible!{% endif %}')">
+                            <a href="{% url 'administrator:industry_delete' industry.id %}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('{% if request.session.site_language == 'zh' %}确定删除「{{ industry.name }}」？删除后不可恢复！{% else %}Are you sure to delete «{{ industry.name }}»? Deletion is irreversible!{% endif %}')">
                                 {% if request.session.site_language == 'zh' %}删除{% else %}Delete{% endif %}
                             </a>
                         </td>
@@ -74,11 +65,11 @@
                     {% empty %}
                     <!-- Empty table prompt (bilingual: search no result / no data) -->
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-3">
+                        <td colspan="5" class="text-center text-muted py-3">
                             {% if current_keyword %}
-                                {% if request.session.site_language == 'zh' %}未找到匹配的公司{% else %}No matching companies found{% endif %}
+                                {% if request.session.site_language == 'zh' %}未找到匹配的行业{% else %}No matching industries found{% endif %}
                             {% else %}
-                                {% if request.session.site_language == 'zh' %}暂无公司数据{% else %}No company data yet{% endif %}
+                                {% if request.session.site_language == 'zh' %}暂无行业数据{% else %}No industry data yet{% endif %}
                             {% endif %}
                         </td>
                     </tr>
@@ -88,27 +79,27 @@
         </div>
         <!-- Pagination component (full bilingual support) -->
         {% if paginator.num_pages > 1 %}
-        <nav aria-label="{% if request.session.site_language == 'zh' %}公司分页{% else %}Company Pagination{% endif %}" class="mt-4">
+        <nav aria-label="{% if request.session.site_language == 'zh' %}行业分页{% else %}Industry Pagination{% endif %}" class="mt-4">
             <ul class="pagination justify-content-center">
-                <li class="page-item {% if not companies.has_previous %}disabled{% endif %}">
-                    {% if companies.has_previous %}
-                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ companies.previous_page_number }}">
+                <li class="page-item {% if not industries.has_previous %}disabled{% endif %}">
+                    {% if industries.has_previous %}
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ industries.previous_page_number }}">
                             {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
                         </a>
                     {% else %}
                         <span class="page-link">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span>
                     {% endif %}
                 </li>
-                {% for num in companies.paginator.page_range %}
-                    {% if num >= companies.number|add:-2 and num <= companies.number|add:2 %}
-                        <li class="page-item {% if num == companies.number %}active{% endif %}">
+                {% for num in industries.paginator.page_range %}
+                    {% if num >= industries.number|add:-2 and num <= industries.number|add:2 %}
+                        <li class="page-item {% if num == industries.number %}active{% endif %}">
                             <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ num }}">{{ num }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
-                <li class="page-item {% if not companies.has_next %}disabled{% endif %}">
-                    {% if companies.has_next %}
-                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ companies.next_page_number }}">
+                <li class="page-item {% if not industries.has_next %}disabled{% endif %}">
+                    {% if industries.has_next %}
+                        <a class="page-link" href="?{% if current_keyword %}keyword={{ current_keyword }}&{% endif %}page={{ industries.next_page_number }}">
                             {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
                         </a>
                     {% else %}
@@ -119,9 +110,9 @@
             <!-- Pagination info (bilingual: total count / current page) -->
             <div class="text-center mt-2 text-muted">
                 {% if request.session.site_language == 'zh' %}
-                    共 {{ paginator.count }} 家公司，当前第 {{ companies.number }} 页/共 {{ paginator.num_pages }} 页
+                    共 {{ paginator.count }} 个行业，当前第 {{ industries.number }} 页/共 {{ paginator.num_pages }} 页
                 {% else %}
-                    Total {{ paginator.count }} companies, Page {{ companies.number }} / {{ paginator.num_pages }}
+                    Total {{ paginator.count }} industries, Page {{ industries.number }} / {{ paginator.num_pages }}
                 {% endif %}
             </div>
         </nav>

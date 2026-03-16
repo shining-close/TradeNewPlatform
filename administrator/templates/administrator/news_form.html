@@ -1,77 +1,109 @@
 {% extends 'administrator/base.html' %}
+<!-- Page title: bilingual with add/edit distinguish -->
 {% block title %}
-    {% if is_edit %}修改资讯{% else %}新增资讯{% endif %} - 管理后台
+    {% if is_edit %}
+        {% if request.session.site_language == 'zh' %}修改资讯{% else %}Edit News{% endif %} - ID: {{ news.id }}
+    {% else %}
+        {% if request.session.site_language == 'zh' %}新增资讯{% else %}Add News{% endif %}
+    {% endif %}
+    - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
 {% endblock %}
+
 {% block content %}
 <div class="card mb-4">
     <div class="card-header">
         <h4 class="mb-0">
-            {% if is_edit %}修改资讯（ID：{{ news.id }}）{% else %}新增资讯{% endif %}
+            {% if is_edit %}
+                {% if request.session.site_language == 'zh' %}修改资讯（ID：{{ news.id }}）{% else %}Edit News (ID: {{ news.id }}){% endif %}
+            {% else %}
+                {% if request.session.site_language == 'zh' %}新增资讯{% else %}Add News{% endif %}
+            {% endif %}
         </h4>
     </div>
     <div class="card-body">
-        <!-- 必须加 enctype="multipart/form-data" 才能上传文件 -->
+        <!-- Add enctype="multipart/form-data" for file upload -->
         <form method="post" enctype="multipart/form-data" class="row g-3">
             {% csrf_token %}
+            <!-- Title: required field -->
             <div class="col-12">
-                <label class="form-label">标题 <span class="text-danger">*</span></label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}标题{% else %}Title{% endif %}
+                    <span class="text-danger">*</span>
+                </label>
                 <input type="text" name="title" class="form-control" required
                        value="{% if is_edit %}{{ news.title }}{% endif %}">
             </div>
+            <!-- Category: required field -->
             <div class="col-md-6">
-                <label class="form-label">分类 <span class="text-danger">*</span></label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}分类{% else %}Category{% endif %}
+                    <span class="text-danger">*</span>
+                </label>
                 <select name="category" class="form-select" required>
-                    <option value="">请选择分类</option>
+                    <option value="">{% if request.session.site_language == 'zh' %}请选择分类{% else %}Select Category{% endif %}</option>
                     {% for k, v in category_choices %}
                     <option value="{{ k }}" {% if is_edit and news.category == k %}selected{% endif %}>{{ v }}</option>
                     {% endfor %}
                 </select>
             </div>
+            <!-- Cover Image: optional, support preview for edit -->
             <div class="col-md-6">
-                <label class="form-label">封面图（可选）</label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}封面图（可选）{% else %}Cover Image (Optional){% endif %}
+                </label>
                 <input type="file" name="image" class="form-control" accept="image/*">
                 {% if is_edit and news.image %}
                 <div class="mt-2">
-                    <span class="form-text text-muted">现有封面：</span>
-                    <img src="{{ news.image.url }}" style="width: 80px; height: 80px; object-fit: cover;" alt="封面图">
+                    <span class="form-text text-muted">{% if request.session.site_language == 'zh' %}现有封面：{% else %}Current Cover: {% endif %}</span>
+                    <img src="{{ news.image.url }}" style="width: 80px; height: 80px; object-fit: cover;" alt="{% if request.session.site_language == 'zh' %}封面图{% else %}Cover Image{% endif %}">
                 </div>
                 {% endif %}
             </div>
+            <!-- Content: required field with char count limit -->
             <div class="col-12">
-                <label class="form-label">内容 <span class="text-danger">*</span></label>
+                <label class="form-label">
+                    {% if request.session.site_language == 'zh' %}内容{% else %}Content{% endif %}
+                    <span class="text-danger">*</span>
+                </label>
                 <textarea name="content" id="news-content" class="form-control" rows="8" required
                           maxlength="1000" oninput="updateWordCount()">{% if is_edit %}{{ news.content }}{% endif %}</textarea>
                 <div class="form-text text-end">
-                    <span id="word-count">{% if is_edit %}{{ news.content|length }}{% else %}0{% endif %}</span>/1000 字
+                    <span id="word-count">{% if is_edit %}{{ news.content|length }}{% else %}0{% endif %}</span>/1000
+                    {% if request.session.site_language == 'zh' %}字{% else %}Chars{% endif %}
                 </div>
             </div>
+            <!-- Submit & Cancel Buttons: bilingual -->
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">
-                    {% if is_edit %}保存修改{% else %}新增资讯{% endif %}
+                    {% if is_edit %}
+                        {% if request.session.site_language == 'zh' %}保存修改{% else %}Save Changes{% endif %}
+                    {% else %}
+                        {% if request.session.site_language == 'zh' %}新增资讯{% else %}Add News{% endif %}
+                    {% endif %}
                 </button>
-                <a href="{% url 'administrator:news_manage' %}" class="btn btn-secondary ms-2">取消返回</a>
+                <a href="{% url 'administrator:news_manage' %}" class="btn btn-secondary ms-2">
+                    {% if request.session.site_language == 'zh' %}取消返回{% else %}Cancel & Back{% endif %}
+                </a>
             </div>
         </form>
     </div>
 </div>
-
+<!-- Real-time character count script (function unchanged) -->
 <script>
-// 实时统计字数并限制
+// Count and limit characters in real time
 function updateWordCount() {
     const content = document.getElementById('news-content');
     const count = document.getElementById('word-count');
     const maxLength = 1000;
     let currentLength = content.value.length;
-
-    // 超出时截断
+    // Auto truncate if exceed max length
     if (currentLength > maxLength) {
         content.value = content.value.substring(0, maxLength);
         currentLength = maxLength;
     }
     count.textContent = currentLength;
 }
-
-// 页面加载时初始化字数统计
+// Initialize character count on page load
 window.onload = function() {
     updateWordCount();
 };

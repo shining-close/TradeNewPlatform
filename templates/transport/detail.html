@@ -1,10 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}
+    {{ transport.name }} -
+    {% if request.session.site_language == 'zh' %}
+        物流详情 - 跨国贸易供需服务平台
+    {% else %}
+        Logistics Details - Cross-border Trade Supply and Demand Service Platform
+    {% endif %}
+{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<!-- Main content container: Logistics detail page (breadcrumb + logistics info) -->
+<div class="container py-4">
+    <!-- Breadcrumb navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'trade:index' %}">{% if request.session.site_language == 'zh' %}首页{% else %}Home{% endif %}</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'trade:transport_list' %}">{% if request.session.site_language == 'zh' %}国际物流{% else %}International Logistics{% endif %}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ transport.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Page header -->
+    <div class="bg-primary text-white py-3 mb-4 text-center">
+        <h2 class="mb-0">{{ transport.name }}</h2>
+        {% if transport.type %}
+        <p class="mb-0 fs-6 mt-1">
+            {{ transport.type }} |
+            {% if request.session.site_language == 'zh' %}
+                由{{ transport.company|default:"合作物流商" }}提供
+            {% else %}
+                Provided by {{ transport.company|default:"Cooperative Logistics Provider" }}
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Logistics detail main card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row">
+                <!-- Logistics image -->
+                {% if transport.image %}
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <img src="{{ transport.image.url }}" alt="{{ transport.name }}" class="img-thumbnail w-100" style="max-height: 300px; object-fit: cover;">
+                </div>
+                {% endif %}
+
+                <!-- Logistics basic information -->
+                <div class="{% if transport.image %}col-md-8{% else %}col-12{% endif %}">
+                    <div class="bg-light p-3 rounded mb-4">
+                        <h5 class="fw-bold mb-3">
+                            {% if request.session.site_language == 'zh' %}物流基础信息{% else %}Basic Logistics Information{% endif %}
+                        </h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">{% if request.session.site_language == 'zh' %}物流类型：{% else %}Logistics Type：{% endif %}</span>
+                                <span>{{ transport.type|default:'' }}</span>
+                                {% if not transport.type %}
+                                    <span>{% if request.session.site_language == 'zh' %}未填写{% else %}Not filled{% endif %}</span>
+                                {% endif %}
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">{% if request.session.site_language == 'zh' %}参考价格：{% else %}Reference Price：{% endif %}</span>
+                                <span>
+                                    {% if transport.price %}
+                                        {{ transport.price }} 元/单位
+                                    {% else %}
+                                        {% if request.session.site_language == 'zh' %}未定价{% else %}Unpriced{% endif %}
+                                    {% endif %}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">{% if request.session.site_language == 'zh' %}运输时效：{% else %}Transportation Time：{% endif %}</span>
+                                <span>
+                                    {{ transport.time|default:'' }}
+                                    {% if not transport.time %}
+                                        {% if request.session.site_language == 'zh' %}7-15天{% else %}7-15 Days{% endif %}
+                                    {% endif %}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">{% if request.session.site_language == 'zh' %}物流公司：{% else %}Logistics Company：{% endif %}</span>
+                                <span>{{ transport.company|default:'' }}</span>
+                                {% if not transport.company %}
+                                    <span>{% if request.session.site_language == 'zh' %}未填写{% else %}Not filled{% endif %}</span>
+                                {% endif %}
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">{% if request.session.site_language == 'zh' %}录入时间：{% else %}Entry Time：{% endif %}</span>
+                                <span>{{ transport.create_time|date:"Y-m-d H:i" }}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Logistics full description -->
+                    <div>
+                        <h5 class="fw-bold mb-3">
+                            {% if request.session.site_language == 'zh' %}物流服务详情{% else %}Logistics Service Details{% endif %}
+                        </h5>
+                        <div class="border p-3 rounded">
+                            {% if transport.description %}
+                                {{ transport.description|linebreaksbr }}
+                            {% else %}
+                                {% if request.session.site_language == 'zh' %}
+                                    暂无详细的物流服务描述，敬请关注！
+                                {% else %}
+                                    No detailed logistics service description available, please stay tuned!
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card footer: Back to logistics list button -->
+        <div class="card-footer bg-light">
+            <a href="{% url 'trade:transport_list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left"></i>
+                {% if request.session.site_language == 'zh' %}返回物流列表{% else %}Back to Logistics List{% endif %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

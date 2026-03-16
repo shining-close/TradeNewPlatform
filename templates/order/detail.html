@@ -1,70 +1,192 @@
 {% extends 'base.html' %}
-
-{% block title %}{{ order.title }} - 订单详情{% endblock %}
+{% block title %}
+    {{ order.title }} -
+    {% if request.session.site_language == 'zh' %}
+        订单详情
+    {% else %}
+        Order Details
+    {% endif %}
+{% endblock %}
 
 {% block content %}
+<!-- Main content container: Order detail page (breadcrumb + order info + collect/edit functions) -->
 <div class="container py-4">
-    <!-- 页面标题 -->
-    <div class="bg-primary text-white py-4 mb-4 text-center">
-        <h2 class="mb-0">
-            {% if order.flag == '1' %}供应信息{% else %}采购需求{% endif %}详情
-        </h2>
-    </div>
-
-    <!-- 订单详情卡片 -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 text-primary">{{ order.title }}</h5>
-            <!-- 仅发布者显示编辑按钮 -->
-            {% if order.user == request.user %}
-                <a href="{% url 'trade:order_edit' order.id %}" class="btn btn-sm btn-warning">
-                    编辑订单
+    <!-- Breadcrumb navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'trade:index' %}">{% if request.session.site_language == 'zh' %}首页{% else %}Home{% endif %}</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% if order.flag == '1' %}{% url 'trade:supply_list' %}{% else %}{% url 'trade:purchase_list' %}{% endif %}">
+                    {% if request.session.site_language == 'zh' %}
+                        {% if order.flag == '1' %}供应订单{% else %}采购订单{% endif %}列表
+                    {% else %}
+                        {% if order.flag == '1' %}Supply Orders{% else %}Purchase Orders{% endif %} List
+                    {% endif %}
                 </a>
-            {% endif %}
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ order.title|truncatechars:10 }}</li>
+        </ol>
+    </nav>
+
+    <!-- Order detail card -->
+    <div class="card shadow-sm mb-4">
+        <!-- Card header: Title + collect button + edit button -->
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h4 class="mb-0 text-primary">{{ order.title }}</h4>
+            <div class="d-flex gap-2">
+                <!-- Collect button (AJAX async interaction) -->
+                {% if user.is_authenticated %}
+                    <form id="collectOrderForm" method="POST" action="{% url 'trade:collect_order' order.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm {% if is_collected %}btn-danger{% else %}btn-outline-primary{% endif %}">
+                            {% if is_collected %}
+                                <i class="bi bi-star-fill"></i> {% if request.session.site_language == 'zh' %}取消收藏{% else %}Uncollect{% endif %}
+                            {% else %}
+                                <i class="bi bi-star"></i> {% if request.session.site_language == 'zh' %}收藏订单{% else %}Collect Order{% endif %}
+                            {% endif %}
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'trade:login' %}?next={{ request.path }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-star"></i> {% if request.session.site_language == 'zh' %}登录收藏{% else %}Login to Collect{% endif %}
+                    </a>
+                {% endif %}
+
+                <!-- Edit button (only for order owner or admin) -->
+                {% if order.user == request.user or request.user.role == 'admin' %}
+                <a href="{% url 'trade:order_edit' order.id %}" class="btn btn-sm btn-warning">
+                    {% if request.session.site_language == 'zh' %}编辑订单{% else %}Edit Order{% endif %}
+                </a>
+                {% endif %}
+            </div>
         </div>
+
+        <!-- Card body: Order basic info + image + detailed description -->
         <div class="card-body">
-            <!-- 基础信息 -->
-            <div class="row mb-3">
+            <!-- Basic info row (contact phone + nationality retained) -->
+            <div class="row mb-4">
                 <div class="col-md-6">
-                    <p><strong>订单类型：</strong>{{ order.get_flag_display }}</p>
-                    <p><strong>行业分类：</strong>{{ order.category|default:"未分类" }}</p>
-                    <p><strong>发布人：</strong>{{ order.user.username }}</p>
-                    <p><strong>发布时间：</strong>{{ order.create_time|date:"Y-m-d H:i:s" }}</p>
-                </div>
-                <div class="col-md-6">
-                    <p><strong>订单状态：</strong>
-                        {% if order.status == 'completed' %}
-                            <span class="badge bg-success">{{ order.get_status_display }}</span>
+                    <p><strong>{% if request.session.site_language == 'zh' %}订单类型：{% else %}Order Type：{% endif %}</strong>{{ order.get_flag_display }}</p>
+                    <p><strong>{% if request.session.site_language == 'zh' %}行业分类：{% else %}Industry Category：{% endif %}</strong>
+                        {% if order.industry.name %}
+                            {{ order.industry.name }}
                         {% else %}
-                            <span class="badge bg-warning">{{ order.get_status_display }}</span>
+                            {% if request.session.site_language == 'zh' %}未分类{% else %}Uncategorized{% endif %}
                         {% endif %}
                     </p>
-                    <p><strong>截止时间：</strong>{{ order.end_time|date:"Y-m-d H:i:s"|default:"无" }}</p>
-                    <p><strong>关联物流：</strong>{{ order.transport.name|default:"无" }}</p>
+                    <p><strong>{% if request.session.site_language == 'zh' %}发布人：{% else %}Publisher：{% endif %}</strong>{{ order.user.username }}</p>
+                    <p><strong>{% if request.session.site_language == 'zh' %}发布时间：{% else %}Publish Time：{% endif %}</strong>{{ order.create_time|date:"Y-m-d H:i:s" }}</p>
+                    <p><strong>{% if request.session.site_language == 'zh' %}联系电话：{% else %}Contact Phone：{% endif %}</strong>
+                        {% if order.contact_phone %}
+                            {{ order.contact_phone }}
+                        {% else %}
+                            {% if request.session.site_language == 'zh' %}未填写{% else %}Not filled{% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>{% if request.session.site_language == 'zh' %}订单状态：{% else %}Order Status：{% endif %}</strong>
+                        <span class="badge {% if order.status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </p>
+                    <p><strong>{% if request.session.site_language == 'zh' %}截止时间：{% else %}Deadline：{% endif %}</strong>
+                        {% if order.end_time %}
+                            {{ order.end_time|date:"Y-m-d H:i:s" }}
+                        {% else %}
+                            {% if request.session.site_language == 'zh' %}无{% else %}None{% endif %}
+                        {% endif %}
+                    </p>
+                    <p><strong>{% if request.session.site_language == 'zh' %}关联物流：{% else %}Associated Logistics：{% endif %}</strong>
+                        {% if order.transport.name %}
+                            {{ order.transport.name }}
+                        {% else %}
+                            {% if request.session.site_language == 'zh' %}无{% else %}None{% endif %}
+                        {% endif %}
+                    </p>
+                    <p><strong>{% if request.session.site_language == 'zh' %}最后更新：{% else %}Last Updated：{% endif %}</strong>{{ order.update_time|date:"Y-m-d H:i:s" }}</p>
+                    <p><strong>{% if request.session.site_language == 'zh' %}国籍：{% else %}Nationality：{% endif %}</strong>
+                        {% if order.nationality %}
+                            {{ order.nationality }}
+                        {% else %}
+                            {% if request.session.site_language == 'zh' %}未填写{% else %}Not filled{% endif %}
+                        {% endif %}
+                    </p>
                 </div>
             </div>
 
-        <!-- 新增：订单图片展示 -->
-{% if order.image %}
-    <div class="mb-4">
-        <h6>订单图片：</h6>
-        <img src="{{ order.image.url }}" alt="订单图片"
-             style="max-width: 800px; max-height: 600px; border: 1px solid #dee2e6; border-radius: 4px;">
-    </div>
-{% endif %}
-            
-            <!-- 详细内容 -->
+            <!-- Order image (show if exists) -->
+            {% if order.image or order.image_url %}
+            <div class="mb-4">
+                <h6 class="fw-bold">{% if request.session.site_language == 'zh' %}订单图片：{% else %}Order Image：{% endif %}</h6>
+                <img src="{{ order.image.url|default:order.image_url }}" alt="{{ order.title }}"
+                     class="img-thumbnail" style="max-width: 100%; max-height: 500px;">
+            </div>
+            {% endif %}
+
+            <!-- Order detailed description -->
             <hr>
-            <h6>详细描述：</h6>
-            <div class="bg-light p-3 rounded">
-                {{ order.content|linebreaks }}  <!-- 保留换行 -->
+            <h6 class="fw-bold mb-3">{% if request.session.site_language == 'zh' %}详细描述：{% else %}Detailed Description：{% endif %}</h6>
+            <div class="bg-light p-4 rounded">
+                {{ order.content|linebreaksbr }}
             </div>
         </div>
+
+        <!-- Card footer: Back to list button -->
         <div class="card-footer bg-light">
-            <a href="{% url 'trade:order_list' %}?flag={{ order.flag }}" class="btn btn-outline-primary">
-                返回{% if order.flag == '1' %}供应列表{% else %}采购列表{% endif %}
+            <a href="{% if order.flag == '1' %}{% url 'trade:supply_list' %}{% else %}{% url 'trade:purchase_list' %}{% endif %}"
+               class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left"></i> {% if request.session.site_language == 'zh' %}
+                    返回{% if order.flag == '1' %}供应列表{% else %}采购列表{% endif %}
+                {% else %}
+                    Back to {% if order.flag == '1' %}Supply List{% else %}Purchase List{% endif %}
+                {% endif %}
             </a>
         </div>
     </div>
 </div>
+
+<!-- AJAX script for async collect/uncollect (no page refresh) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const collectForm = document.getElementById('collectOrderForm');
+    const isZh = '{{ request.session.site_language }}' === 'zh';
+    if (collectForm) {
+        collectForm.addEventListener('submit', function(e) {
+            // Prevent default form submission (no page refresh)
+            e.preventDefault();
+            const collectBtn = this.querySelector('button');
+            // Save original button text to avoid duplicate clicks during request
+            const originalText = collectBtn.innerHTML;
+            collectBtn.disabled = true;
+            // AJAX submit collect/uncollect request
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest' // Mark as AJAX request
+                }
+            }).then(res => res.json()).then(data => {
+                if (data.status === 'success') {
+                    // Switch button style and text based on return action
+                    if (data.action === 'collect') {
+                        collectBtn.className = 'btn btn-sm btn-danger';
+                        collectBtn.innerHTML = '<i class="bi bi-star-fill"></i> ' + (isZh ? '取消收藏' : 'Uncollect');
+                    } else {
+                        collectBtn.className = 'btn btn-sm btn-outline-primary';
+                        collectBtn.innerHTML = '<i class="bi bi-star"></i> ' + (isZh ? '收藏订单' : 'Collect Order');
+                    }
+                }
+            }).catch(err => {
+                alert(isZh ? '收藏操作失败，请稍后再试！' : 'Failed to collect order, please try again later!');
+            }).finally(() => {
+                // Restore button availability
+                collectBtn.disabled = false;
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

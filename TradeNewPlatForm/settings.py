@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from django.utils.translation import gettext_lazy as _
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -52,6 +54,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'django.middleware.locale.LocaleMiddleware',  # 语言中间件（需放在 CommonMiddleware 之后
 ]
 
 ROOT_URLCONF = "TradeNewPlatForm.urls"
@@ -146,3 +149,23 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 # 3. 每次请求自动刷新 Session 有效期（延长登录状态）
 SESSION_SAVE_EVERY_REQUEST = True
+
+
+# 开启国际化
+USE_I18N = True  # 启用国际化
+USE_L10N = True  # 启用本地化（日期/数字格式等）
+USE_TZ = True
+
+# 支持的语言（英文为默认，中文为可选）
+LANGUAGES = [
+    ('en', _('English')),   # 英文
+    ('zh-hans', _('Simplified Chinese')),  # 简体中文
+]
+
+# 语言文件存放路径（新建 locale 文件夹）
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),  # 项目根目录下的 locale 文件夹
+]
+
+# 默认语言（英文）
+LANGUAGE_CODE = 'en'

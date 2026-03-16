@@ -1,39 +1,69 @@
 {% extends 'administrator/base.html' %}
-{% block title %}数据看板 - 管理后台{% endblock %}
+<!-- Page title: bilingual support -->
+{% block title %}
+    {% if request.session.site_language == 'zh' %}数据看板{% else %}Data Dashboard{% endif %} - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="card mb-4">
     <div class="card-header">
-        <h4 class="mb-0">平台核心数据统计</h4>
+        <h4 class="mb-0">
+            {% if request.session.site_language == 'zh' %}平台核心数据统计{% else %}Platform Core Data Statistics{% endif %}
+        </h4>
     </div>
     <div class="card-body">
         <div class="row g-4">
-            <!-- 用户统计 -->
+            <!-- User statistics card -->
             <div class="col-md-4 col-sm-6">
                 <div class="card border-primary h-100">
                     <div class="card-body text-center">
-                        <h5 class="card-title text-primary">总用户数</h5>
+                        <h5 class="card-title text-primary">
+                            {% if request.session.site_language == 'zh' %}总用户数{% else %}Total Users{% endif %}
+                        </h5>
                         <p class="display-4 mb-0">{{ total_users }}</p>
-                        <small class="text-muted">企业用户：{{ enterprise_users }}（已审核：{{ audited_enterprise }}）</small>
+                        <small class="text-muted">
+                            {% if request.session.site_language == 'zh' %}
+                                企业用户：{{ enterprise_users }}（已审核：{{ audited_enterprise }}）
+                            {% else %}
+                                Enterprise Users: {{ enterprise_users }} (Audited: {{ audited_enterprise }})
+                            {% endif %}
+                        </small>
                     </div>
                 </div>
             </div>
-            <!-- 订单统计 -->
+            <!-- Order statistics card -->
             <div class="col-md-4 col-sm-6">
                 <div class="card border-success h-100">
                     <div class="card-body text-center">
-                        <h5 class="card-title text-success">总订单数</h5>
+                        <h5 class="card-title text-success">
+                            {% if request.session.site_language == 'zh' %}总订单数{% else %}Total Orders{% endif %}
+                        </h5>
                         <p class="display-4 mb-0">{{ total_orders }}</p>
-                        <small class="text-muted">供应：{{ supply_orders }} | 需求：{{ demand_orders }} | 已完成：{{ completed_orders }}</small>
+                        <small class="text-muted">
+                            {% if request.session.site_language == 'zh' %}
+                                供应：{{ supply_orders }} | 需求：{{ demand_orders }} | 已完成：{{ completed_orders }}
+                            {% else %}
+                                Supply: {{ supply_orders }} | Demand: {{ demand_orders }} | Completed: {{ completed_orders }}
+                            {% endif %}
+                        </small>
                     </div>
                 </div>
             </div>
-            <!-- 其他统计 -->
+            <!-- Resource statistics card -->
             <div class="col-md-4 col-sm-12">
                 <div class="card border-info h-100">
                     <div class="card-body text-center">
-                        <h5 class="card-title text-info">资源统计</h5>
+                        <h5 class="card-title text-info">
+                            {% if request.session.site_language == 'zh' %}资源统计{% else %}Resource Statistics{% endif %}
+                        </h5>
                         <p class="display-4 mb-0">{{ total_transport }} / {{ total_news }}</p>
-                        <small class="text-muted">物流线路：{{ total_transport }} | 行业资讯：{{ total_news }}</small>
+                        <small class="text-muted">
+                            {% if request.session.site_language == 'zh' %}
+                                物流线路：{{ total_transport }} | 行业资讯：{{ total_news }}
+                            {% else %}
+                                Logistics Routes: {{ total_transport }} | Industry News: {{ total_news }}
+                            {% endif %}
+                        </small>
                     </div>
                 </div>
             </div>

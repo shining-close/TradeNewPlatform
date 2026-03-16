@@ -1,107 +1,210 @@
 {% extends 'base.html' %}
-
-{% block title %}编辑{% if flag == '1' %}供应信息{% else %}采购需求{% endif %} - 中俄贸易平台{% endblock %}
+{% block title %}
+    {% if request.session.site_language == 'zh' %}
+        编辑{{ order.get_flag_display }} - {{ order.title }}
+    {% else %}
+        Edit {{ order.get_flag_display }} - {{ order.title }}
+    {% endif %}
+{% endblock %}
 
 {% block content %}
+<!-- Main content container: Order edit page (breadcrumb + edit form + data echo) -->
 <div class="container py-4">
-    <!-- 页面标题 -->
-    <div class="bg-primary text-white py-4 mb-4 text-center">
-        <h2 class="mb-0">编辑{% if flag == '1' %}供应信息{% else %}采购需求{% endif %}</h2>
-    </div>
+    <!-- Breadcrumb navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'trade:index' %}">{% if request.session.site_language == 'zh' %}首页{% else %}Home{% endif %}</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% if order.flag == '2' %}{% url 'trade:purchase_list' %}{% else %}{% url 'trade:supply_list' %}{% endif %}">
+                    {% if request.session.site_language == 'zh' %}
+                        {% if order.flag == '2' %}国际采购订单{% else %}国际供应订单{% endif %}
+                    {% else %}
+                        {% if order.flag == '2' %}International Purchase Orders{% else %}International Supply Orders{% endif %}
+                    {% endif %}
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'trade:order_detail' order.id %}">{{ order.title }}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                {% if request.session.site_language == 'zh' %}编辑订单{% else %}Edit Order{% endif %}
+            </li>
+        </ol>
+    </nav>
 
+    <!-- Edit form container (centered layout) -->
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
+        <div class="col-md-8 col-lg-7">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0">
+                        {% if request.session.site_language == 'zh' %}
+                            编辑{{ order.get_flag_display }}
+                        {% else %}
+                            Edit {{ order.get_flag_display }}
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" id="editOrderForm">
                         {% csrf_token %}
-                        
-                        <!-- 标题 -->
-                        <div class="mb-3">
-                            <label for="title" class="form-label">
-                                {% if flag == '1' %}供应信息标题{% else %}采购需求标题{% endif %} 
-                                <span class="text-danger">*</span>
+                        <!-- Order title (required + data echo) -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}订单标题{% else %}Order Title{% endif %} <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control" id="title" name="title" 
-                                   value="{{ order.title }}" required>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                   value="{{ order.title }}" placeholder="{% if request.session.site_language == 'zh' %}请输入标题（至少5个字）{% else %}Please enter title (at least 5 characters){% endif %}">
                         </div>
 
-
-                    <!-- 新增：订单图片上传+预览 -->
-<div class="mb-3">
-    <label class="form-label">订单图片（可选）</label>
-    <!-- 图片预览 -->
-    {% if order.image %}
-        <div class="mb-2">
-            <img src="{{ order.image.url }}" alt="订单图片"
-                 style="max-width: 300px; max-height: 200px; border: 1px solid #dee2e6;">
-        </div>
-        <div class="form-text mb-2">重新上传将覆盖原有图片</div>
-    {% endif %}
-    <!-- 上传按钮 -->
-    <input type="file" class="form-control" id="image" name="image" accept="image/*">
-</div>
-                        
-                        <!-- 分类 -->
-                        <div class="mb-3">
-                            <label for="category" class="form-label">行业分类</label>
-                            <input type="text" class="form-control" id="category" name="category" 
-                                   value="{{ order.category|default:'' }}"
-                                   placeholder="{% if flag == '1' %}例如：农产品/机械设备（供应）{% else %}例如：电子产品/化工品（采购）{% endif %}">
-                        </div>
-                        
-                        <!-- 状态（仅发布者可改） -->
-                        <div class="mb-3">
-                            <label for="status" class="form-label">订单状态</label>
-                            <select class="form-select" id="status" name="status">
-                                <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>待处理</option>
-                                <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>处理中</option>
-                                <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>已完成</option>
-                            </select>
-                        </div>
-                        
-                        <!-- 详细内容 -->
-                        <div class="mb-3">
-                            <label for="content" class="form-label">
-                                {% if flag == '1' %}供应详情{% else %}采购详情{% endif %} 
-                                <span class="text-danger">*</span>
+                        <!-- Industry category (dropdown + data echo) -->
+                        <div class="mb-4">
+                            <label for="industry" class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}行业分类{% else %}Industry Category{% endif %} <span class="text-danger">*</span>
                             </label>
-                            <textarea class="form-control" id="content" name="content" rows="6" required>
-                                {{ order.content }}
-                            </textarea>
-                        </div>
-                        
-                        <!-- 截止时间 -->
-                        <div class="mb-3">
-                            <label for="end_time" class="form-label">截止时间</label>
-                            <input type="datetime-local" class="form-control" id="end_time" name="end_time"
-                                   value="{{ order.end_time|date:'Y-m-d\TH:i'|default:'' }}">
-                        </div>
-                        
-                        <!-- 关联物流 -->
-                        <div class="mb-3">
-                            <label for="transport" class="form-label">关联物流方案</label>
-                            <select class="form-select" id="transport" name="transport">
-                                <option value="">不关联物流</option>
-                                {% for t in transports %}
-                                    <option value="{{ t.id }}" {% if order.transport.id == t.id %}selected{% endif %}>
-                                        {{ t.name }}（{{ t.transport_type }}）
-                                    </option>
+                            <select class="form-select" id="industry" name="industry" required>
+                                <option value="">
+                                    {% if request.session.site_language == 'zh' %}请选择行业分类{% else %}Please select industry category{% endif %}
+                                </option>
+                                {% for industry in industries %}
+                                <option value="{{ industry.id }}" {% if order.industry and order.industry.id == industry.id %}selected{% endif %}>
+                                    {{ industry.name }}
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        
-                        <!-- 提交按钮 -->
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">保存修改</button>
-                            <div class="d-flex gap-2">
-                                <a href="{% url 'trade:order_detail' order.id %}" class="btn btn-outline-secondary flex-fill">
-                                    取消返回详情
-                                </a>
-                                <a href="{% url 'trade:order_list' %}?flag={{ flag }}" class="btn btn-outline-primary flex-fill">
-                                    返回列表
-                                </a>
+
+                        <!-- Order status (dropdown + data echo) -->
+                        <div class="mb-4">
+                            <label for="status" class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}订单状态{% else %}Order Status{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="uncompleted" {% if order.status == 'uncompleted' %}selected{% endif %}>
+                                    {% if request.session.site_language == 'zh' %}未完成{% else %}Uncompleted{% endif %}
+                                </option>
+                                <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>
+                                    {% if request.session.site_language == 'zh' %}已完成{% else %}Completed{% endif %}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Order details (word count limit + real-time statistics + data echo) -->
+                        <div class="mb-4">
+                            <label for="content" class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}订单详情{% else %}Order Details{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <textarea
+                                class="form-control"
+                                id="content"
+                                name="content"
+                                rows="8"
+                                required
+                                maxlength="500"
+                                oninput="updateWordCount(this)"
+                            >{{ order.content }}</textarea>
+                            <div class="form-text text-muted d-flex justify-content-between">
+                                <span>
+                                    {% if request.session.site_language == 'zh' %}
+                                        请详细描述订单内容（至少20个字，最多500字）
+                                    {% else %}
+                                        Please detailedly describe the order content (at least 20 characters, max 500 characters)
+                                    {% endif %}
+                                </span>
+                                <span id="word-count">
+                                    {% if request.session.site_language == 'zh' %}当前字数：{% else %}Current Word Count：{% endif %}
+                                    <span id="current-count">{{ order.content|length }}</span> / 500
+                                </span>
                             </div>
+                        </div>
+
+                        <!-- Deadline (data echo) -->
+                        <div class="mb-4">
+                            <label for="end_time" class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}截止时间{% else %}Deadline{% endif %}
+                            </label>
+                            <input type="datetime-local" class="form-control" id="end_time" name="end_time"
+                                   value="{{ order.end_time|date:'Y-m-d\TH:i'|default:'' }}">
+                        </div>
+
+                        <!-- Associated logistics (dropdown + data echo) -->
+                        <div class="mb-4">
+                            <label for="transport" class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}关联物流服务{% else %}Associated Logistics Service{% endif %}
+                            </label>
+                            <select class="form-select" id="transport" name="transport">
+                                <option value="">
+                                    {% if request.session.site_language == 'zh' %}不关联物流服务{% else %}No associated logistics service{% endif %}
+                                </option>
+                                {% for transport in transports %}
+                                <option value="{{ transport.id }}" {% if order.transport and order.transport.id == transport.id %}selected{% endif %}>
+                                    {{ transport.name }} - {{ transport.price }}元/吨
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Contact phone (data echo) -->
+                        <div class="mb-4">
+                            <label for="contact_phone" class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}联系电话{% else %}Contact Phone{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="contact_phone" name="contact_phone"
+                                   value="{{ order.contact_phone|default:'' }}" placeholder="{% if request.session.site_language == 'zh' %}请输入联系电话（选填）{% else %}Please enter contact phone (optional){% endif %}">
+                        </div>
+
+                        <!-- Nationality (data echo) -->
+                        <div class="mb-4">
+                            <label for="nationality" class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}国籍{% else %}Nationality{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="nationality" name="nationality"
+                                   value="{{ order.nationality|default:'' }}" placeholder="{% if request.session.site_language == 'zh' %}请输入国籍（选填）{% else %}Please enter nationality (optional){% endif %}">
+                        </div>
+
+                        <!-- Local image upload (with preview + data echo) -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}当前本地图片{% else %}Current Local Image{% endif %}
+                            </label>
+                            {% if order.image %}
+                            <div class="mb-2">
+                                <img src="{{ order.image.url }}" alt="{{ order.title }}" class="img-thumbnail" style="max-height: 200px;">
+                            </div>
+                            <div class="form-text text-muted mb-2">
+                                {% if request.session.site_language == 'zh' %}
+                                    选择新文件将替换此图片，不选则保留原图片
+                                {% else %}
+                                    Selecting a new file will replace this image; leave blank to keep the original
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <p class="text-muted mb-2">
+                                {% if request.session.site_language == 'zh' %}暂无本地图片{% else %}No local image available{% endif %}
+                            </p>
+                            {% endif %}
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        </div>
+
+                        <!-- Network image URL (data echo) -->
+                        <div class="mb-4">
+                            <label for="image_url" class="form-label fw-bold">
+                                {% if request.session.site_language == 'zh' %}网络图片URL{% else %}Network Image URL{% endif %}
+                            </label>
+                            <input type="url" class="form-control" id="image_url" name="image_url"
+                                   value="{{ order.image_url|default:'' }}" placeholder="https://example.com/image.jpg">
+                        </div>
+
+                        <!-- Submit & Cancel buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                            <a href="{% url 'trade:order_detail' order.id %}" class="btn btn-outline-secondary me-md-2">
+                                {% if request.session.site_language == 'zh' %}取消返回{% else %}Cancel & Back{% endif %}
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                {% if request.session.site_language == 'zh' %}保存修改{% else %}Save Changes{% endif %}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -109,4 +212,125 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Word count statistics function
+function updateWordCount(textarea) {
+    const currentCount = textarea.value.length;
+    const maxCount = 500;
+    const countElement = document.getElementById('current-count');
+    const wordCountWrapper = document.getElementById('word-count');
+    const isZh = '{{ request.session.site_language }}' === 'zh';
+
+    // Update word count display
+    countElement.textContent = currentCount;
+
+    // Highlight in red when exceeding limit
+    if (currentCount > maxCount) {
+        wordCountWrapper.classList.add('text-danger');
+        wordCountWrapper.innerHTML = `
+            ${isZh ? '当前字数：' : 'Current Word Count：'}
+            <span id="current-count">${currentCount}</span> / 500
+            ${isZh ? '（已超出限制）' : ' (Exceeded Limit)'}
+        `;
+    } else {
+        wordCountWrapper.classList.remove('text-danger');
+        wordCountWrapper.innerHTML = `
+            ${isZh ? '当前字数：' : 'Current Word Count：'}
+            <span id="current-count">${currentCount}</span> / 500
+        `;
+    }
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize word count
+    updateWordCount(document.getElementById('content'));
+
+    const form = document.getElementById('editOrderForm');
+    const title = document.getElementById('title');
+    const content = document.getElementById('content');
+    const industry = document.getElementById('industry');
+    const isZh = '{{ request.session.site_language }}' === 'zh';
+
+    // Title validation
+    title.addEventListener('blur', function() {
+        const errorMsg = isZh ? '标题不能为空且至少5个字符' : 'Title cannot be empty and must be at least 5 characters';
+        validateField(this, val => val.trim().length >= 5, errorMsg);
+    });
+
+    // Content validation (word count range)
+    content.addEventListener('blur', function() {
+        const val = this.value.trim();
+        let errorMsg = '';
+        if (val.length < 20) {
+            errorMsg = isZh ? '详情不能为空且至少20个字符' : 'Details cannot be empty and must be at least 20 characters';
+            validateField(this, () => false, errorMsg);
+        } else if (val.length > 500) {
+            errorMsg = isZh ? '详情最多只能输入500个字符' : 'Details can be at most 500 characters';
+            validateField(this, () => false, errorMsg);
+        } else {
+            validateField(this, () => true, '');
+        }
+    });
+
+    // Industry category validation
+    industry.addEventListener('change', function() {
+        const errorMsg = isZh ? '请选择行业分类' : 'Please select industry category';
+        validateField(this, val => val !== '', errorMsg);
+    });
+
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const contentVal = content.value.trim();
+        const titleErrorMsg = isZh ? '标题不能为空且至少5个字符' : 'Title cannot be empty and must be at least 5 characters';
+        const industryErrorMsg = isZh ? '请选择行业分类' : 'Please select industry category';
+
+        // Title validation
+        if (!validateField(title, val => val.trim().length >= 5, titleErrorMsg)) isValid = false;
+
+        // Content word count validation
+        if (contentVal.length < 20) {
+            const errorMsg = isZh ? '详情不能为空且至少20个字符' : 'Details cannot be empty and must be at least 20 characters';
+            validateField(content, () => false, errorMsg);
+            isValid = false;
+        } else if (contentVal.length > 500) {
+            const errorMsg = isZh ? '详情最多只能输入500个字符' : 'Details can be at most 500 characters';
+            validateField(content, () => false, errorMsg);
+            isValid = false;
+        }
+
+        // Industry category validation
+        if (!validateField(industry, val => val !== '', industryErrorMsg)) isValid = false;
+
+        // Prevent submission if validation fails
+        if (!isValid) {
+            e.preventDefault();
+            const firstError = document.querySelector('.is-invalid');
+            if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    // Universal validation function
+    function validateField(field, condition, errorMsg) {
+        field.classList.remove('is-invalid');
+        const existingError = field.nextElementSibling;
+        if (existingError && existingError.classList.contains('invalid-feedback')) {
+            existingError.remove();
+        }
+        if (!condition(field.value)) {
+            field.classList.add('is-invalid');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            errorDiv.textContent = errorMsg;
+            field.after(errorDiv);
+            return false;
+        }
+        return true;
+    }
+});
+</script>
 {% endblock %}

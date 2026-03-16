@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% block title %}
+    {% if request.session.site_language == 'zh' %}
+        我的收藏 - 跨国贸易平台
+    {% else %}
+        My Collections - Cross-Border Trade Platform
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Main content container: My collections page (supply/purchase orders + news) -->
+<div class="container py-4">
+    <!-- Page header: Title + back to personal center button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 text-primary">{% if request.session.site_language == 'zh' %}我的收藏{% else %}My Collections{% endif %}</h2>
+        <a href="{% url 'trade:profile' %}" class="btn btn-outline-primary">
+            {% if request.session.site_language == 'zh' %}返回个人中心{% else %}Back to Personal Center{% endif %}
+        </a>
+    </div>
+
+    <!-- Debug info (can be deleted after testing) -->
+    <div class="alert alert-info mb-4">
+        {% if request.session.site_language == 'zh' %}
+            供应订单收藏数：{{ supply_paginator.count }} |
+            采购订单收藏数：{{ purchase_paginator.count }} |
+            新闻收藏数：{{ news_paginator.count }}
+        {% else %}
+            Supply Order Collections: {{ supply_paginator.count }} |
+            Purchase Order Collections: {{ purchase_paginator.count }} |
+            News Collections: {{ news_paginator.count }}
+        {% endif %}
+    </div>
+
+    <!-- Supply order collections card -->
+    <div class="card mb-5 shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{% if request.session.site_language == 'zh' %}供应订单收藏{% else %}Supply Order Collections{% endif %}</h5>
+            <span class="text-white-50">
+                {% if request.session.site_language == 'zh' %}共{% else %}Total{% endif %}{{ supply_paginator.count }}{% if request.session.site_language == 'zh' %}条{% else %} items{% endif %}
+            </span>
+        </div>
+        <div class="card-body">
+            {% if supply_collects %}
+                <div class="list-group mb-3">
+                    {% for coll in supply_collects %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ coll.order.title }}</h6>
+                            <small class="text-muted">
+                                {% if request.session.site_language == 'zh' %}发布人：{% else %}Publisher：{% endif %}{{ coll.order.user.username }} |
+                                {% if request.session.site_language == 'zh' %}收藏时间：{% else %}Collected at：{% endif %}{{ coll.create_time|date:"Y-m-d H:i" }}
+                            </small>
+                        </div>
+                        <a href="{% url 'trade:order_detail' coll.order.id %}" class="btn btn-sm btn-outline-primary">
+                            {% if request.session.site_language == 'zh' %}查看订单{% else %}View Order{% endif %}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Supply order pagination (only show if more than 1 page) -->
+                {% if supply_paginator.num_pages > 1 %}
+                <div class="d-flex justify-content-center">
+                    <nav aria-label="Supply collect pagination">
+                        <ul class="pagination">
+                            {% if supply_collects.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?supply_page={{ supply_collects.previous_page_number }}&purchase_page={{ purchase_page }}&news_page={{ news_page }}">
+                                    {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span></li>
+                            {% endif %}
+
+                            {% for num in supply_paginator.page_range %}
+                                {% if supply_collects.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% else %}
+                                <li class="page-item"><a class="page-link" href="?supply_page={{ num }}&purchase_page={{ purchase_page }}&news_page={{ news_page }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if supply_collects.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?supply_page={{ supply_collects.next_page_number }}&purchase_page={{ purchase_page }}&news_page={{ news_page }}">
+                                    {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">{% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            {% else %}
+                <p class="text-muted text-center py-3">{% if request.session.site_language == 'zh' %}暂无收藏的供应订单{% else %}No collected supply orders yet{% endif %}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Purchase order collections card -->
+    <div class="card mb-5 shadow-sm">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{% if request.session.site_language == 'zh' %}采购订单收藏{% else %}Purchase Order Collections{% endif %}</h5>
+            <span class="text-white-50">
+                {% if request.session.site_language == 'zh' %}共{% else %}Total{% endif %}{{ purchase_paginator.count }}{% if request.session.site_language == 'zh' %}条{% else %} items{% endif %}
+            </span>
+        </div>
+        <div class="card-body">
+            {% if purchase_collects %}
+                <div class="list-group mb-3">
+                    {% for coll in purchase_collects %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ coll.order.title }}</h6>
+                            <small class="text-muted">
+                                {% if request.session.site_language == 'zh' %}发布人：{% else %}Publisher：{% endif %}{{ coll.order.user.username }} |
+                                {% if request.session.site_language == 'zh' %}收藏时间：{% else %}Collected at：{% endif %}{{ coll.create_time|date:"Y-m-d H:i" }}
+                            </small>
+                        </div>
+                        <a href="{% url 'trade:order_detail' coll.order.id %}" class="btn btn-sm btn-outline-primary">
+                            {% if request.session.site_language == 'zh' %}查看订单{% else %}View Order{% endif %}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Purchase order pagination (only show if more than 1 page) -->
+                {% if purchase_paginator.num_pages > 1 %}
+                <div class="d-flex justify-content-center">
+                    <nav aria-label="Purchase collect pagination">
+                        <ul class="pagination">
+                            {% if purchase_collects.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?supply_page={{ supply_page }}&purchase_page={{ purchase_collects.previous_page_number }}&news_page={{ news_page }}">
+                                    {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span></li>
+                            {% endif %}
+
+                            {% for num in purchase_paginator.page_range %}
+                                {% if purchase_collects.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% else %}
+                                <li class="page-item"><a class="page-link" href="?supply_page={{ supply_page }}&purchase_page={{ num }}&news_page={{ news_page }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if purchase_collects.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?supply_page={{ supply_page }}&purchase_page={{ purchase_collects.next_page_number }}&news_page={{ news_page }}">
+                                    {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">{% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            {% else %}
+                <p class="text-muted text-center py-3">{% if request.session.site_language == 'zh' %}暂无收藏的采购订单{% else %}No collected purchase orders yet{% endif %}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- News collections card -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{% if request.session.site_language == 'zh' %}新闻收藏{% else %}News Collections{% endif %}</h5>
+            <span class="text-white-50">
+                {% if request.session.site_language == 'zh' %}共{% else %}Total{% endif %}{{ news_paginator.count }}{% if request.session.site_language == 'zh' %}条{% else %} items{% endif %}
+            </span>
+        </div>
+        <div class="card-body">
+            {% if news_collects %}
+                <div class="list-group mb-3">
+                    {% for coll in news_collects %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ coll.news.title }}</h6>
+                            <small class="text-muted">
+                                {% if request.session.site_language == 'zh' %}分类：{% else %}Category：{% endif %}{{ coll.news.get_category_display }} |
+                                {% if request.session.site_language == 'zh' %}收藏时间：{% else %}Collected at：{% endif %}{{ coll.create_time|date:"Y-m-d H:i" }}
+                            </small>
+                        </div>
+                        <a href="{% url 'trade:news_detail' coll.news.id %}" class="btn btn-sm btn-outline-primary">
+                            {% if request.session.site_language == 'zh' %}查看新闻{% else %}View News{% endif %}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- News pagination (only show if more than 1 page) -->
+                {% if news_paginator.num_pages > 1 %}
+                <div class="d-flex justify-content-center">
+                    <nav aria-label="News collect pagination">
+                        <ul class="pagination">
+                            {% if news_collects.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?supply_page={{ supply_page }}&purchase_page={{ purchase_page }}&news_page={{ news_collects.previous_page_number }}">
+                                    {% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">{% if request.session.site_language == 'zh' %}上一页{% else %}Previous{% endif %}</span></li>
+                            {% endif %}
+
+                            {% for num in news_paginator.page_range %}
+                                {% if news_collects.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% else %}
+                                <li class="page-item"><a class="page-link" href="?supply_page={{ supply_page }}&purchase_page={{ purchase_page }}&news_page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if news_collects.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?supply_page={{ supply_page }}&purchase_page={{ purchase_page }}&news_page={{ news_collects.next_page_number }}">
+                                    {% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">{% if request.session.site_language == 'zh' %}下一页{% else %}Next{% endif %}</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            {% else %}
+                <p class="text-muted text-center py-3">{% if request.session.site_language == 'zh' %}暂无收藏的新闻{% else %}No collected news yet{% endif %}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
