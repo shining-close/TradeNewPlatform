@@ -1,12 +1,12 @@
 {% extends 'administrator/base.html' %}
-<!-- Page title: bilingual support -->
+<!-- Page title: Bilingual support -->
 {% block title %}
     {% if request.session.site_language == 'zh' %}修改物流{% else %}Edit Logistics{% endif %} - {% if request.session.site_language == 'zh' %}管理后台{% else %}Admin Backend{% endif %}
 {% endblock %}
 {% block content %}
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <!-- Page header title (bilingual + logistics name) -->
+        <!-- Page header title: Bilingual display with logistics name -->
         <h4 class="mb-0">
             {% if request.session.site_language == 'zh' %}修改物流：{% else %}Edit Logistics: {% endif %}{{ transport.name }}
         </h4>
@@ -15,7 +15,7 @@
         </a>
     </div>
     <div class="card-body">
-        <!-- 新增消息提示：和添加页统一，兼容后端提示 -->
+        <!-- New message prompt: Consistent with add page, compatible with backend prompts -->
         {% if messages %}
             {% for msg in messages %}
                 <div class="alert {% if msg.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} alert-dismissible fade show mb-4" role="alert">
@@ -24,7 +24,7 @@
                 </div>
             {% endfor %}
         {% endif %}
-        <!-- Add enctype="multipart/form-data" for image upload -->
+        <!-- Add enctype="multipart/form-data" for image upload function -->
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row g-3 mb-3">
@@ -34,13 +34,14 @@
                         <span class="text-danger">*</span>
                     </label>
                     {{ form.name }}
+                    <!-- Display validation error of name field -->
                     {% if form.name.errors %}
                         <div class="text-danger mt-1">{{ form.name.errors.0 }}</div>
                     {% endif %}
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">{% if request.session.site_language == 'zh' %}物流类型{% else %}Logistics Type{% endif %}<span class="text-danger">*</span></label>
-                    <!-- 核心修改1：物流类型改session双语下拉框，默认选中当前值，保留原样式 -->
+                    <!-- Core Modification 1: Change logistics type to session-based bilingual dropdown, select current value by default, retain original style -->
                     <select name="type" class="form-control" required>
                         <option value="" disabled>{% if request.session.site_language == 'zh' %}请选择物流类型{% else %}Select Logistics Type{% endif %}</option>
                         <option value="air" {% if transport.type == 'air' %}selected{% endif %}>
@@ -53,6 +54,7 @@
                             {% if request.session.site_language == 'zh' %}陆运{% else %}Land Transport{% endif %}
                         </option>
                     </select>
+                    <!-- Display validation error of type field -->
                     {% if form.type.errors %}
                         <div class="text-danger mt-1">{{ form.type.errors.0 }}</div>
                     {% endif %}
@@ -62,6 +64,7 @@
                 <div class="col-md-6">
                     <label class="form-label">{% if request.session.site_language == 'zh' %}参考价格{% else %}Reference Price{% endif %}</label>
                     {{ form.price }}
+                    <!-- Display validation error of price field -->
                     {% if form.price.errors %}
                         <div class="text-danger mt-1">{{ form.price.errors.0 }}</div>
                     {% endif %}
@@ -69,6 +72,7 @@
                 <div class="col-md-6">
                     <label class="form-label">{% if request.session.site_language == 'zh' %}时效{% else %}Delivery Time{% endif %}</label>
                     {{ form.time }}
+                    <!-- Display validation error of time field -->
                     {% if form.time.errors %}
                         <div class="text-danger mt-1">{{ form.time.errors.0 }}</div>
                     {% endif %}
@@ -77,26 +81,28 @@
             <div class="mb-3">
                 <label class="form-label">{% if request.session.site_language == 'zh' %}物流公司{% else %}Logistics Company{% endif %}</label>
                 {{ form.company }}
+                <!-- Display validation error of company field -->
                 {% if form.company.errors %}
                     <div class="text-danger mt-1">{{ form.company.errors.0 }}</div>
                 {% endif %}
             </div>
-            <!-- Description field with character count -->
+            <!-- Description field with character count function -->
             <div class="mb-3">
                 <label class="form-label">
                     {% if request.session.site_language == 'zh' %}物流描述{% else %}Logistics Description{% endif %}
                     <span class="text-muted">({% if request.session.site_language == 'zh' %}最多500字{% else %}Max 500 Chars{% endif %})</span>
                 </label>
                 {{ form.description }}
-                <!-- Character count display -->
+                <!-- Character count display area -->
                 <div class="mt-1">
                     <span id="char-count" class="text-muted">0/500</span>
                 </div>
+                <!-- Display validation error of description field -->
                 {% if form.description.errors %}
                     <div class="text-danger mt-1">{{ form.description.errors.0 }}</div>
                 {% endif %}
             </div>
-            <!-- Image field with preview & error prompt - 核心修改2：固定为英文，保留预览逻辑 -->
+            <!-- Image upload field with preview and error prompt - Core Modification 2: Fixed to English display, retain preview logic -->
             <div class="mb-3">
                 <label class="form-label">Logistics Image</label>
                 {{ form.image }}
@@ -109,7 +115,7 @@
                 <div class="form-text mt-1">
                     Supports JPG/PNG formats, size ≤ 2MB, recommended size: 800x400
                 </div>
-                <!-- Preview current image -->
+                <!-- Preview the current logistics image -->
                 {% if transport.image %}
                 <div class="mt-2">
                     <img src="{{ transport.image.url }}"
@@ -129,20 +135,20 @@
         </form>
     </div>
 </div>
-<!-- 内联JS：字符计数+提示框关闭，和添加页一致，无独立文件 -->
+<!-- Inline JS: Character count and alert close function, consistent with add page, no independent files -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 字符计数：初始化显示当前字数，实时更新，超出500字标红
+    // Character count: Initialize and display current character count, update in real time, mark red when exceeding 500 characters
     const descInput = document.getElementById('description-input');
     const charCount = document.getElementById('char-count');
     if (descInput) {
-        // 初始化已有内容的字符数
+        // Initialize the character count of existing content
         const initialLength = descInput.value.length;
         charCount.textContent = `${initialLength}/500`;
         if (initialLength > 500) {
             charCount.classList.add('text-danger');
         }
-        // 实时输入监听
+        // Real-time input listening event
         descInput.addEventListener('input', function() {
             const length = this.value.length;
             charCount.textContent = `${length}/500`;
@@ -153,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    // 提示框关闭逻辑：兼容bootstrap的btn-close
+    // Alert close logic: Compatible with bootstrap's btn-close component
     document.querySelectorAll('.btn-close').forEach(btn => {
         btn.addEventListener('click', function() {
             this.closest('.alert').style.display = 'none';

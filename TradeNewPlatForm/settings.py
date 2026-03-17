@@ -14,10 +14,8 @@ from pathlib import Path
 import os
 from django.utils.translation import gettext_lazy as _
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -27,23 +25,21 @@ SECRET_KEY = "django-insecure-cl6-(0l!zfkan+=vxf*jui$(#mrpc85z4(%ar%w1e_t!++p))=
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = []
 
-# 指定自定义用户模型
+# Specify custom user model
 AUTH_USER_MODEL = 'trade.CustomUser'
 
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
-    "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.auth",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "trade",
-    'administrator',  # 管理员端（全新独立 App）
+    'administrator',  # Administrator backend (completely independent App)
 ]
 
 MIDDLEWARE = [
@@ -54,7 +50,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'django.middleware.locale.LocaleMiddleware',  # 语言中间件（需放在 CommonMiddleware 之后
+    'django.middleware.locale.LocaleMiddleware',  # Language middleware (must be placed after CommonMiddleware)
 ]
 
 ROOT_URLCONF = "TradeNewPlatForm.urls"
@@ -62,8 +58,7 @@ ROOT_URLCONF = "TradeNewPlatForm.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / 'templates']
-        ,
+        "DIRS": [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -77,16 +72,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "TradeNewPlatForm.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'trade_platform',  # 数据库名（需手动创建）
-        'USER': 'root',  # 数据库用户名
-        'PASSWORD': 'AEAEAEEOO',  # 数据库密码
+        'NAME': 'trade_platform',  # Database name (need to create manually)
+        'USER': 'root',  # Database username
+        'PASSWORD': 'AEAEAEEOO',  # Database password
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
@@ -95,10 +88,8 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -114,58 +105,50 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
-
 STATIC_URL = "static/"
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # 指向根目录 static
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # Point to the root static directory
 
-# 登录页URL（和你的urls.py中登录路由一致）
+# Login page URL (consistent with the login route in your urls.py)
 LOGIN_URL = '/login/'
-# 登录后默认跳转页
+# Default redirect page after login
 LOGIN_REDIRECT_URL = '/'
 
-# settings.py 末尾添加
+# Add at the end of settings.py
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# settings.py 末尾添加
-# 1. 设置 Session 有效期为 7 天（单位：秒），可根据需求调整
+# Add at the end of settings.py
+# 1. Set session expiration time to 7 days (unit: seconds), adjustable as needed
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
-# 2. 关闭浏览器后 Session 不立即失效（关键：避免关浏览器就登出）
+# 2. Session does not expire immediately after closing the browser (key: avoid logout on browser close)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-# 3. 每次请求自动刷新 Session 有效期（延长登录状态）
+# 3. Automatically refresh session expiration time on each request (extend login status)
 SESSION_SAVE_EVERY_REQUEST = True
 
-
-# 开启国际化
-USE_I18N = True  # 启用国际化
-USE_L10N = True  # 启用本地化（日期/数字格式等）
+# Enable internationalization
+USE_I18N = True  # Enable internationalization
+USE_L10N = True  # Enable localization (date/number formats, etc.)
 USE_TZ = True
 
-# 支持的语言（英文为默认，中文为可选）
+# Supported languages (English as default, Chinese as optional)
 LANGUAGES = [
-    ('en', _('English')),   # 英文
-    ('zh-hans', _('Simplified Chinese')),  # 简体中文
+    ('en', _('English')),   # English
+    ('zh-hans', _('Simplified Chinese')),  # Simplified Chinese
 ]
 
-# 语言文件存放路径（新建 locale 文件夹）
+# Language file storage path (create a new locale folder)
 LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),  # 项目根目录下的 locale 文件夹
+    os.path.join(BASE_DIR, 'locale'),  # Locale folder in the project root directory
 ]
 
-# 默认语言（英文）
+# Default language (English)
 LANGUAGE_CODE = 'en'

@@ -1,3 +1,89 @@
+Cross-Border Trade Service Platform Project README
+
+Project Introduction
+This project is a cross-border trade service platform developed based on the Django framework. It supports multi-role (visitor, enterprise user, administrator) permission management and implements core business functions such as order publishing/management/favoriting, enterprise information management, logistics management, and administrator backend.
+Runtime Environment Requirements
+Python 3.10+
+Django 6.0.3
+MySQL 8.0+ (or a compatible database)
+
+Runtime Environment Requirements
+Python 3.10+
+Django 6.0.3
+MySQL 8.0+ (or a compatible database)
+
+Quick Start Steps
+1. Clone / Download the Project
+Extract the project code to a local directory and enter the project root directory:
+cd TradePlatformProject
+2. Install Dependencies
+Run the following command to install the required dependency packages:
+pip install -r requirements.txt
+3. Database Configuration
+Configure your MySQL database connection information in TradePlatform/settings.py:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'your_database_name',
+        'USER': 'your_database_username',
+        'PASSWORD': 'your_database_password',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+    }
+}
+4. Database Migration
+Run the following commands to create database table structures:
+python manage.py makemigrations
+python manage.py migrate
+5. Create a Super Administrator
+Follow the prompts to enter a username, email, and password for logging into the administrator backend:\
+python manage.py createsuperuser
+6. Start the Project
+After successful startup, visit the address: http://127.0.0.1:8000/
+python manage.py runserver
+
+Test Accounts (for functional verification)
+Administrator: Manage all user, order, and logistics data
+Enterprise User: Publish, edit, view, and favorite their own orders
+Visitor	test_visitor: Browse the order list; operations require login
+
+Core Function Description
+Multi-role Permission Control: Strict isolation of permissions for visitors, enterprise users, and administrators.
+Order Management: Enterprise users can publish supply/purchase orders; administrators can modify order statuses and delete orders.
+Favorites Function: Enterprise users can favorite interested orders; the same order cannot be favorited repeatedly.
+Logistics Management: Administrators can maintain logistics route information; enterprise users can select logistics methods when publishing orders.
+
+TradePlatformProject/
+├── trade/                      # Core business application
+│   ├── models.py               # Data models (User, Enterprise, Order, Favorite, etc.)
+│   ├── views.py                # Business views
+│   ├── urls.py                 # Route configuration
+│   └── tests.py                # Unit test code
+├── administrator/              # Administrator backend application
+│   ├── views.py                # Backend management views
+│   ├── urls.py                 # Backend route configuration
+│   └── tests.py                # Backend unit tests
+├── TradePlatform/              # Project configuration
+│   ├── settings.py             # Global configuration (database, static files, etc.)
+│   └── urls.py                 # Root route configuration
+├── requirements.txt            # Project dependency list
+├── manage.py                   # Django management script
+└── README.md                   # Project documentation
+
+Unit Test Instructions
+The project contains 29 unit test cases covering core models and business logic. Run all tests with the following command:
+python manage.py test trade administrator
+A successful test run will display OK, indicating all test cases have passed verification.
+
+Notes
+Ensure that the MySQL service is installed and running locally, and that the database configuration matches settings.py.
+To use the image upload function, ensure the media/ directory has write permissions.
+Database migration commands must be executed on the first run; otherwise, a "table does not exist" error will occur.
+
+
+
+
+
 跨境贸易服务平台项目 README
 
 项目简介

@@ -37,13 +37,13 @@
                 <div class="col-md-4">
                     <select class="form-select" name="type" onchange="this.form.submit()">
                         <option value="">{% if request.session.site_language == 'zh' %}全部类型{% else %}All Types{% endif %}</option>
-                        <option value="空运" {% if type == '空运' %}selected{% endif %}>
+                        <option value="air" {% if type == 'air' %}selected{% endif %}>
                             {% if request.session.site_language == 'zh' %}空运{% else %}Air Transport{% endif %}
                         </option>
-                        <option value="海运" {% if type == '海运' %}selected{% endif %}>
+                        <option value="sea" {% if type == 'sea' %}selected{% endif %}>
                             {% if request.session.site_language == 'zh' %}海运{% else %}Sea Transport{% endif %}
                         </option>
-                        <option value="陆运" {% if type == '陆运' %}selected{% endif %}>
+                        <option value="land" {% if type == 'land' %}selected{% endif %}>
                             {% if request.session.site_language == 'zh' %}陆运{% else %}Land Transport{% endif %}
                         </option>
                     </select>

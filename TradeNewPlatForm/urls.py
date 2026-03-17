@@ -21,12 +21,12 @@ from django.conf.urls.static import static
 
 
 urlpatterns = [
-    path('django-admin/', admin.site.urls),  # 保留Django自带admin，重命名避免冲突
-    path('', include('trade.urls')),  # 业务应用路由
-    path('admin/', include('administrator.urls')),  # 管理员端入口
+    path('django-admin/', admin.site.urls),  # Keep Django's built-in admin, rename to avoid conflicts
+    path('', include('trade.urls')),  # Business application routes
+    path('admin/', include('administrator.urls')),  # Administrator backend entry
 ]
 
-# 开发环境下静态文件访问配置
+# static file for development
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

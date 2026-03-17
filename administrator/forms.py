@@ -1,30 +1,26 @@
-# 导入核心依赖
+# Import core dependencies
 import os
 from django import forms
 from django.forms import ClearableFileInput
 from django.utils.translation import gettext_lazy as _
 from trade.models import Transport
 
-
-# 自定义文件上传组件（替换默认中文提示为英文）
+# Custom file upload component (replace default Chinese prompts with English)
 class EnglishClearableFileInput(ClearableFileInput):
     """Custom clearable file input with English labels (replace default Chinese)"""
     clear_checkbox_label = _('Clear')
     initial_text = _('Current Image')
     input_text = _('Choose File')
     template_with_clear = '<br> %(clear_checkbox_label)s %(clear)s'
-
-    # 自定义模板（可选，保持格式统一）
+    # Custom template (optional, keep format consistent)
     template_with_initial = (
         '%(initial_text)s: %(initial)s %(clear_template)s<br>%(input_text)s: %(input)s'
     )
 
-
-# 物流运输新增/编辑表单（适配多语言，支持数据校验）
+# Logistics add/edit form (adapt to multi-language, support data validation)
 class TransportAddForm(forms.ModelForm):
     """Transport Form (with image size/format validation)"""
-
-    # 价格字段专属配置（非负校验+格式限制）
+    # Exclusive configuration for price field (non-negative validation + format restriction)
     price = forms.DecimalField(
         label=_('Price'),
         max_digits=10,
@@ -41,10 +37,10 @@ class TransportAddForm(forms.ModelForm):
         })
     )
 
-    # Meta类（必须缩进，作为TransportAddForm的内部类）
+    # Meta class (must be indented, as an inner class of TransportAddForm)
     class Meta:
         model = Transport
-        # 映射的模型字段（与前端表单对应）
+        # Mapped model fields (corresponding to front-end form)
         fields = ['name', 'type', 'price', 'time', 'company', 'description', 'image']
         widgets = {
             'name': forms.TextInput(attrs={
@@ -54,7 +50,7 @@ class TransportAddForm(forms.ModelForm):
             }),
             'type': forms.Select(attrs={
                 'class': 'form-control'
-            }),  # 前端自定义下拉选项，此处仅配置样式
+            }),  # Custom drop-down options in front-end, only style configured here
             'time': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': _('Enter transport time (e.g. 3-5 days)')
@@ -75,15 +71,15 @@ class TransportAddForm(forms.ModelForm):
             })
         }
 
-    # 图片字段校验（大小+格式）
+    # Image field validation (size + format)
     def clean_image(self):
         """Validate image size (<=2MB) and format (jpg/jpeg/png)"""
         image = self.cleaned_data.get('image')
         if image:
-            # 大小校验（2MB = 2*1024*1024 bytes）
+            # Size validation (2MB = 2*1024*1024 bytes)
             if image.size > 2 * 1024 * 1024:
                 raise forms.ValidationError(_('Image size cannot exceed 2MB'))
-            # 格式校验
+            # Format validation
             allowed_formats = ['jpg', 'jpeg', 'png']
             file_ext = os.path.splitext(image.name)[1].lower().lstrip('.')
             if file_ext not in allowed_formats:
@@ -92,12 +88,12 @@ class TransportAddForm(forms.ModelForm):
                 )
         return image
 
-    # 表单初始化（适配编辑/新增场景）
+    # Form initialization (adapt to edit/add scenarios)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # 编辑场景：初始化描述字段值
+        # Edit scenario: Initialize description field value
         if self.initial.get('description'):
             self.fields['description'].initial = self.initial['description']
-        # 新增场景/无价格：默认价格为0.00
+        # Add scenario / no price set: Default price to 0.00
         if not self.initial.get('price'):
             self.fields['price'].initial = 0.00
