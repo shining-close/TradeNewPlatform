@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.utils import timezone
-from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator  # Import numeric validator for model fields
 from django.utils.translation import gettext_lazy as _  # Import transform
 
 # Custom user model (core)
@@ -84,29 +84,68 @@ class Company(models.Model):
     def __str__(self):
         return self.name
 
-# Logistics information model
+
+# Logistics information model (supports session-based zh/en switch only)
 class Transport(models.Model):
-    # Logistics type options (corresponding to front-end drop-down box value)
+    # Logistics type choices (value matches front-end select options: air/sea/land)
     TYPE_CHOICES = (
-        ('air', _("Air Transport")),
-        ('sea', _("Sea Transport")),
-        ('land', _("Land Transport")),
+        ('air', _("Air Transport")),  # Air transport (en) / 空运 (zh)
+        ('sea', _("Sea Transport")),  # Sea transport (en) / 海运 (zh)
+        ('land', _("Land Transport")),  # Land transport (en) / 陆运 (zh)
     )
+
+    # Core fields (session bilingual labels via gettext_lazy)
     name = models.CharField(max_length=100, verbose_name=_("Logistics Name"))
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, verbose_name=_("Logistics Type"))
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Reference Price (CNY/Unit)"), default=0.00)
-    time = models.CharField(max_length=50, verbose_name=_("Transport Time Limit"), default="7-15 days")
-    company = models.CharField(max_length=100, verbose_name=_("Logistics Company"), blank=True, null=True)
-    description = models.TextField(verbose_name=_("Logistics Description"), blank=True, null=True)
-    image = models.ImageField(upload_to="transport/images/", blank=True, null=True, verbose_name=_("Logistics Image"))
+
+    # Price field: non-negative constraint (fixed model layer validation)
+    # Note: Model DecimalField does NOT support min_value parameter - use MinValueValidator instead
+    price = models.DecimalField(
+        max_digits=10,  # Total digits (integer + decimal)
+        decimal_places=2,  # 2 decimal places (CNY precision)
+        verbose_name=_("Reference Price (CNY/Unit)"),
+        default=0.00,  # Default value: 0.00
+        validators=[MinValueValidator(0)],  # Critical fix: validate price ≥ 0 at model level
+        error_messages={
+            'min_value': _('Price cannot be negative'),  # Session bilingual error message
+        }
+    )
+
+    # Additional fields (keep original logic)
+    time = models.CharField(
+        max_length=50,
+        verbose_name=_("Transport Time Limit"),
+        default="7-15 days"
+    )
+    company = models.CharField(
+        max_length=100,
+        verbose_name=_("Logistics Company"),
+        blank=True,
+        null=True
+    )
+    description = models.TextField(
+        verbose_name=_("Logistics Description"),
+        blank=True,
+        null=True
+    )
+    image = models.ImageField(
+        upload_to="transport/images/",
+        blank=True,
+        null=True,
+        verbose_name=_("Logistics Image")
+    )
+
+    # Auto-managed timestamps
     create_time = models.DateTimeField(auto_now_add=True, verbose_name=_("Creation Time"))
     update_time = models.DateTimeField(auto_now=True, verbose_name=_("Update Time"))
 
+    # Meta configuration (session bilingual verbose names)
     class Meta:
         verbose_name = _("International Logistics")
         verbose_name_plural = _("International Logistics")
-        ordering = ["-create_time"]
+        ordering = ["-create_time"]  # Sort by creation time (newest first)
 
+    # String representation (for admin/debug)
     def __str__(self):
         return f"{self.type} - {self.name}"
 

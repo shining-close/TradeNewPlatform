@@ -296,50 +296,45 @@ def user_delete(request, user_id):
 # ---------------------- Order Management ----------------------
 @admin_auth_required
 def order_manage(request):
-    """
-    Order management:
-    - Dual search (title + username)
-    - Supply/demand & status filter
-    - Pagination
-    """
-    # 1. Get all filter/search parameters
+    """Order management list"""
     flag = request.GET.get('flag')
     status = request.GET.get('status')
-    title_keyword = request.GET.get('title_keyword', '').strip()  # Original title search
-    user_keyword = request.GET.get('user_keyword', '').strip()    # New: username search
+    title_keyword = request.GET.get('title_keyword', '').strip()
+    user_keyword = request.GET.get('user_keyword', '').strip()
 
-    # 2. Base query + multi-condition combined search
+    # 基础查询集
     orders = Order.objects.all().order_by('-create_time')
 
-    # Combined search: title fuzzy match OR username fuzzy match
+    # 组合搜索逻辑
     if title_keyword or user_keyword:
         query = Q()
         if title_keyword:
-            query |= Q(title__icontains=title_keyword)  # Title search
+            query |= Q(title__icontains=title_keyword)
+
+        # 核心修复：去掉多余的括号，使用 key=value 格式
         if user_keyword:
-            query |= Q(user__username__icontains=user_keyword)  # Related user table search
+            query |= Q(user__username__icontains=user_keyword)
+
         orders = orders.filter(query)
 
-    # Original supply/demand & status filter
+    # 筛选条件
     if flag:
         orders = orders.filter(flag=flag)
     if status:
         orders = orders.filter(status=status)
 
-    # 3. Pagination logic (fixed EmptyPage error)
+    # 分页逻辑
     paginator = Paginator(orders, 10)
-    page_str = request.GET.get('page', '1')
+    page = request.GET.get('page', '1')
     try:
-        page = int(page_str)
-        if page < 1:
-            page = 1
+        page = int(page)
+        if page < 1: page = 1
         page_orders = paginator.page(page)
-    except PageNotAnInteger:
+    except (PageNotAnInteger, ValueError):
         page_orders = paginator.page(1)
     except EmptyPage:
         page_orders = paginator.page(paginator.num_pages)
 
-    # 4. Context parameters: add user_keyword for template echo
     context = {
         'orders': page_orders,
         'current_flag': flag,
@@ -350,69 +345,72 @@ def order_manage(request):
     }
     return render(request, 'administrator/order_manage.html', context)
 
+
 @admin_auth_required
 def order_status(request, order_id):
-    """Update order status (completed/uncompleted)"""
+    """Toggle Order Status"""
     order = get_object_or_404(Order, id=order_id)
     order.status = "completed" if order.status == "uncompleted" else "uncompleted"
     order.save()
-    messages.success(request, f"Order [{order.title}] status updated!")
-    return redirect('administrator:order_manage')
+
+    if request.session.get('site_language') == 'zh':
+        messages.success(request, f"订单 [{order.title}] 状态更新成功！")
+    else:
+        messages.success(request, f"Order [{order.title}] status updated!")
+    return redirect('administrator:order_manage')  # 修复：跳转列表页
 
 
 @admin_auth_required
 def order_add(request):
-    """Add new order: permission verification + form handling + image upload"""
+    """Add New Order"""
     if request.method == 'POST':
-        # Get form data
         title = request.POST.get('title')
         flag = request.POST.get('flag')
         status = request.POST.get('status')
         content = request.POST.get('content')
-        category = request.POST.get('category', '')
+        industry_id = request.POST.get('industry', '')
         end_time = request.POST.get('end_time')
         user_id = request.POST.get('user')
         transport_id = request.POST.get('transport')
         image_url = request.POST.get('image_url', '')
 
-        # Non-empty verification
         if not all([title, flag, status, content, user_id]):
-            messages.error(request, "Title, type, status, content and publisher are required!")
+            if request.session.get('site_language') == 'zh':
+                messages.error(request, "标题、类型、状态、内容、发布人为必填项！")
+            else:
+                messages.error(request, "Title, type, status, content and publisher are required!")
             return redirect('administrator:order_add')
 
         try:
-            # Relate user and transport
             user = get_object_or_404(CustomUser, id=user_id)
             transport = get_object_or_404(Transport, id=transport_id) if transport_id else None
+            industry = get_object_or_404(Industry, id=industry_id) if industry_id else None
 
-            # Create order object
             order = Order(
-                title=title,
-                flag=flag,
-                status=status,
-                content=content,
-                category=category,
+                title=title, flag=flag, status=status, content=content, industry=industry,
                 end_time=timezone.datetime.strptime(end_time, '%Y-%m-%dT%H:%M') if end_time else None,
-                user=user,
-                transport=transport,
-                image_url=image_url
+                user=user, transport=transport, image_url=image_url
             )
-
-            # Handle image upload
-            if request.FILES.get('image'):
-                order.image = request.FILES.get('image')
+            if request.FILES.get('image'): order.image = request.FILES.get('image')
             order.save()
 
-            messages.success(request, "Order added successfully!")
-            return redirect('administrator:order_manage')
+            if request.session.get('site_language') == 'zh':
+                messages.success(request, f"订单 [{order.title}] 新增成功！")
+            else:
+                messages.success(request, f"Order [{order.title}] added successfully!")
+            return redirect('administrator:order_manage')  # 修复：跳转列表页
+
         except Exception as e:
-            messages.error(request, f"Failed to add order: {str(e)}")
+            if request.session.get('site_language') == 'zh':
+                messages.error(request, f"订单新增失败：{str(e)}")
+            else:
+                messages.error(request, f"Failed to add order: {str(e)}")
             return redirect('administrator:order_add')
 
-    # GET request: render form
     context = {
         'users': CustomUser.objects.all(),
         'transports': Transport.objects.all(),
+        'industries': Industry.objects.all(),
         'is_edit': False
     }
     return render(request, 'administrator/order_form.html', context)
@@ -420,155 +418,211 @@ def order_add(request):
 
 @admin_auth_required
 def order_edit(request, order_id):
-    """Edit order: permission verification + data echo + save modification"""
-    order = get_object_or_404(Order, id=order_id)
+    """Edit Order"""
+    try:
+        order = get_object_or_404(Order, id=order_id)
+    except Exception as e:
+        if request.session.get('site_language') == 'zh':
+            messages.error(request, f"订单不存在：{str(e)}")
+        else:
+            messages.error(request, f"Order does not exist: {str(e)}")
+        return redirect('administrator:order_manage')  # 修复：跳转列表页
 
     if request.method == 'POST':
-        # Get form data
         title = request.POST.get('title')
         flag = request.POST.get('flag')
         status = request.POST.get('status')
         content = request.POST.get('content')
-        category = request.POST.get('category', '')
+        industry_id = request.POST.get('industry', '')
         end_time = request.POST.get('end_time')
         user_id = request.POST.get('user')
         transport_id = request.POST.get('transport')
         image_url = request.POST.get('image_url', '')
 
-        # Non-empty verification
         if not all([title, flag, status, content, user_id]):
-            messages.error(request, "Title, type, status, content and publisher are required!")
+            if request.session.get('site_language') == 'zh':
+                messages.error(request, "标题、类型、状态、内容、发布人为必填项！")
+            else:
+                messages.error(request, "Title, type, status, content and publisher are required!")
             return redirect('administrator:order_edit', order_id=order_id)
 
         try:
-            # Update related data
             user = get_object_or_404(CustomUser, id=user_id)
             transport = get_object_or_404(Transport, id=transport_id) if transport_id else None
+            industry = get_object_or_404(Industry, id=industry_id) if industry_id else None
 
-            # Update order fields
             order.title = title
             order.flag = flag
             order.status = status
             order.content = content
-            order.category = category
-            order.end_time = timezone.datetime.strptime(end_time, '%Y-%m-%dT%H:%M') if end_time else None
+            order.industry = industry
+
+            if end_time:
+                try:
+                    order.end_time = timezone.datetime.strptime(end_time, '%Y-%m-%dT%H:%M')
+                except ValueError:
+                    if request.session.get('site_language') == 'zh':
+                        messages.error(request, "截止时间格式错误！")
+                    else:
+                        messages.error(request, "End time format error!")
+                    return redirect('administrator:order_edit', order_id=order_id)
+            else:
+                order.end_time = None
+
             order.user = user
             order.transport = transport
             order.image_url = image_url
-
-            # Handle image re-upload
-            if request.FILES.get('image'):
-                order.image = request.FILES.get('image')
+            if request.FILES.get('image'): order.image = request.FILES.get('image')
             order.save()
 
-            messages.success(request, "Order updated successfully!")
+            if request.session.get('site_language') == 'zh':
+                messages.success(request, f"订单 [{order.title}] 修改成功！")
+            else:
+                messages.success(request, f"Order [{order.title}] updated successfully!")
+
+            # 最关键修复：修改成功后跳转到订单列表，而不是编辑页
             return redirect('administrator:order_manage')
+
         except Exception as e:
-            messages.error(request, f"Failed to update order: {str(e)}")
+            if request.session.get('site_language') == 'zh':
+                messages.error(request, f"订单修改失败：{str(e)}")
+            else:
+                messages.error(request, f"Failed to update order: {str(e)}")
             return redirect('administrator:order_edit', order_id=order_id)
 
-    # GET request: render form (data echo)
     context = {
         'order': order,
         'users': CustomUser.objects.all(),
         'transports': Transport.objects.all(),
+        'industries': Industry.objects.all(),
         'is_edit': True
     }
     return render(request, 'administrator/order_form.html', context)
 
+
 @admin_auth_required
 def order_delete(request, order_id):
-    """Delete single order"""
+    """Delete Order"""
     order = get_object_or_404(Order, id=order_id)
     title = order.title
     order.delete()
-    messages.success(request, f"Order [{title}] deleted!")
+
+    if request.session.get('site_language') == 'zh':
+        messages.success(request, f"订单 [{title}] 删除成功！")
+    else:
+        messages.success(request, f"Order [{title}] deleted successfully!")
+
+    # 修复：跳转列表页
     return redirect('administrator:order_manage')
 
 # ---------------------- Transport/News Management (Simplified Version) ----------------------
+# Logistics management list (session-based zh/en switch only)
+@admin_auth_required
+def transport_manage(request):
+    transport_list = Transport.objects.all().order_by('-create_time')
+    # Search logic (keep original)
+    search_key = request.GET.get('search', '')
+    if search_key:
+        transport_list = transport_list.filter(name__icontains=search_key)
+    # Pagination logic (keep original: 10 items per page)
+    paginator = Paginator(transport_list, 10)
+    page = request.GET.get('page', 1)
+    try:
+        transports = paginator.page(page)
+    except PageNotAnInteger:
+        transports = paginator.page(1)
+    except EmptyPage:
+        transports = paginator.page(paginator.num_pages)
+    return render(request, 'administrator/transport_manage.html', {
+        'transports': transports,
+        'search_key': search_key
+    })
+
+# Add new logistics record (session-based zh/en switch only)
 @admin_auth_required
 def transport_add(request):
-    """Add new transport record"""
     if request.method == 'POST':
-        # Key: add request.FILES to receive images
         form = TransportAddForm(request.POST, request.FILES)
         if form.is_valid():
             transport = form.save(commit=False)
-            transport.user = request.user
             transport.save()
-            messages.success(request, f"Transport [{transport.name}] added successfully!")
+            # Session-based success message (zh/en only)
+            if request.session.get('site_language') == 'zh':
+                messages.success(request, f"物流 [{transport.name}] 添加成功！")
+            else:
+                messages.success(request, f"Transport [{transport.name}] added successfully!")
             return redirect('administrator:transport_manage')
+        else:
+            # Session-based error message assembly (zh/en only)
+            if request.session.get('site_language') == 'zh':
+                error_msg = "保存失败："
+                field_map = {
+                    'name': '物流名称', 'type': '物流类型', 'price': '参考价格',
+                    'time': '时效', 'company': '物流公司', 'description': '物流描述', 'image': '物流图片'
+                }
+            else:
+                error_msg = "Failed to add: "
+                field_map = {
+                    'name': 'Logistics Name', 'type': 'Logistics Type', 'price': 'Reference Price',
+                    'time': 'Delivery Time', 'company': 'Logistics Company', 'description': 'Logistics Description', 'image': 'Logistics Image'
+                }
+            for field, errors in form.errors.items():
+                field_name = field_map.get(field, field)
+                error_msg += f"{field_name}：{''.join(errors)}；"
+            messages.error(request, error_msg.rstrip('；'))
     else:
         form = TransportAddForm()
     return render(request, 'administrator/transport_add.html', {'form': form})
 
-
-@admin_auth_required
-def transport_manage(request):
-    """
-    Transport management:
-    - Name keyword search
-    - Pagination (10 items per page, fixed EmptyPage error)
-    """
-    # 1. Get search parameters
-    keyword = request.GET.get('keyword', '').strip()  # Transport name search keyword
-
-    # 2. Base query + name fuzzy search
-    transports = Transport.objects.all().order_by('-create_time')
-    if keyword:
-        transports = transports.filter(name__icontains=keyword)  # Case-insensitive name match
-
-    # 3. Pagination logic (same as order/user, handle invalid page number)
-    paginator = Paginator(transports, 10)  # 10 items per page
-    page_str = request.GET.get('page', '1')
-    try:
-        page = int(page_str)
-        if page < 1:
-            page = 1  # Force correct page number less than 1
-        page_transports = paginator.page(page)
-    except PageNotAnInteger:
-        page_transports = paginator.page(1)
-    except EmptyPage:
-        page_transports = paginator.page(paginator.num_pages)
-
-    # 4. Context parameters (search keyword + pagination data)
-    context = {
-        'transports': page_transports,
-        'current_keyword': keyword,
-        'paginator': paginator
-    }
-    return render(request, 'administrator/transport_manage.html', context)
-
-@admin_auth_required
-def transport_delete(request, transport_id):
-    """Delete single transport record"""
-    transport = get_object_or_404(Transport, id=transport_id)
-    transport.delete()
-    messages.success(request, f"Transport [{transport.name}] deleted!")
-    return redirect('administrator:transport_manage')
-
-
+# Edit logistics record (session-based zh/en switch only)
 @admin_auth_required
 def transport_edit(request, transport_id):
-    """Admin edit transport information"""
     transport = get_object_or_404(Transport, id=transport_id)
-
     if request.method == 'POST':
-        # ✅ Key: add request.FILES to receive uploaded images
         form = TransportAddForm(request.POST, request.FILES, instance=transport)
         if form.is_valid():
             form.save()
-            messages.success(request, f"Transport [{transport.name}] updated successfully!")
-            return redirect('administrator:transport_manage')  # Redirect to list
+            # Session-based success message (zh/en only)
+            if request.session.get('site_language') == 'zh':
+                messages.success(request, f"物流 [{transport.name}] 修改成功！")
+            else:
+                messages.success(request, f"Transport [{transport.name}] updated successfully!")
+            return redirect('administrator:transport_manage')
+        else:
+            # Session-based error message assembly (zh/en only)
+            if request.session.get('site_language') == 'zh':
+                error_msg = "修改失败："
+                field_map = {
+                    'name': '物流名称', 'type': '物流类型', 'price': '参考价格',
+                    'time': '时效', 'company': '物流公司', 'description': '物流描述', 'image': '物流图片'
+                }
+            else:
+                error_msg = "Failed to update: "
+                field_map = {
+                    'name': 'Logistics Name', 'type': 'Logistics Type', 'price': 'Reference Price',
+                    'time': 'Delivery Time', 'company': 'Logistics Company', 'description': 'Logistics Description', 'image': 'Logistics Image'
+                }
+            for field, errors in form.errors.items():
+                field_name = field_map.get(field, field)
+                error_msg += f"{field_name}：{''.join(errors)}；"
+            messages.error(request, error_msg.rstrip('；'))
     else:
-        # GET request: display existing data (auto-fill form)
         form = TransportAddForm(instance=transport)
+    return render(request, 'administrator/transport_edit.html', {'form': form, 'transport': transport})
 
-    return render(request, 'administrator/transport_edit.html', {
-        'form': form,
-        'transport': transport  # Pass transport info to template
-    })
-
+# Delete logistics record (session-based zh/en switch only)
+@admin_auth_required
+def transport_delete(request, transport_id):
+    transport = get_object_or_404(Transport, id=transport_id)
+    if request.method == 'POST':
+        transport_name = transport.name
+        transport.delete()
+        # Session-based delete success message (zh/en only)
+        if request.session.get('site_language') == 'zh':
+            messages.success(request, f"物流 [{transport_name}] 删除成功！")
+        else:
+            messages.success(request, f"Transport [{transport_name}] deleted successfully!")
+    return redirect('administrator:transport_manage')
 
 # ---------------------- News Management ----------------------
 @admin_auth_required
