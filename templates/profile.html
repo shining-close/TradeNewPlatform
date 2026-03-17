@@ -118,9 +118,7 @@
                                 <option value="enterprise" {% if user.role == 'enterprise' %}selected{% endif %}>
                                     {% if request.session.site_language == 'zh' %}企业用户{% else %}Enterprise User{% endif %}
                                 </option>
-                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>
-                                    {% if request.session.site_language == 'zh' %}管理员{% else %}Administrator{% endif %}
-                                </option>
+
                             </select>
                             <div class="form-text">
                                 {% if request.session.site_language == 'zh' %}
