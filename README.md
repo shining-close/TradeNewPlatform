@@ -1,3 +1,9 @@
+When creating a database locally, you must first create a super administrator. 
+Then log in to the login page using the super administrator account. 
+Add "/admin" at the end of the URL. After that, you can enter the backend management. 
+You need to create a new user, set it as an administrator on the super administrator page, 
+and then log in with the newly created administrator account. 
+You will be able to normally access the management backend link.
 Cross-Border Trade Service Platform Project README
 
 Project Introduction
@@ -16,10 +22,13 @@ Quick Start Steps
 1. Clone / Download the Project
 Extract the project code to a local directory and enter the project root directory:
 cd TradePlatformProject
+
 2. Install Dependencies
 Run the following command to install the required dependency packages:
 pip install -r requirements.txt
+
 3. Database Configuration
+If you wangt to use sqlite3, see step 7
 Configure your MySQL database connection information in TradePlatform/settings.py:
 DATABASES = {
     'default': {
@@ -80,9 +89,25 @@ Ensure that the MySQL service is installed and running locally, and that the dat
 To use the image upload function, ensure the media/ directory has write permissions.
 Database migration commands must be executed on the first run; otherwise, a "table does not exist" error will occur.
 
+7.if you use sqlite3
+pip uninstall mysqlclient     # 移除 MySQL 驱动依赖
+Change your DataBase in settings.
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'trade_platform.db',  # 数据库文件存储在项目根目录，自动生成
+    }
+}
+python manage.py makemigrations  # 生成迁移文件（若已有可跳过）
+python manage.py migrate         # 执行迁移，自动创建 trade_platform.db
+python manage.py createsuperuser
+run zhe project.
 
 
 
+当在本地创建数据库时，一定要先创建超级管理员，之后用超级管理员现在登陆页面登录，
+再在URL后面加上/admin，之后进入后台管理，需要新建一个用户，将其在超级管理员页面设置为管理员，
+之后用新建的管理员登陆，就能正常见到管理后台的链接
 
 跨境贸易服务平台项目 README
 
@@ -105,6 +130,7 @@ cd TradePlatformProject
 pip install -r requirements.txt
 
 3. 数据库配置
+如果数据库有问题，请到步骤7
 在 TradePlatform/settings.py 中配置你的 MySQL 数据库连接信息：
 DATABASES = {
     'default': {
