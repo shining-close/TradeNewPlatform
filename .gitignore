@@ -11,7 +11,7 @@ __pycache__/
 db.sqlite3
 db.sqlite3-journal
 local_settings.py
-media/
+
 
 # PyCharm 配置
 .idea/
