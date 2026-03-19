@@ -42,7 +42,9 @@ pip install -r requirements.txt
 4.A2.Create Database: Open your MySQL terminal/tool and run this SQL to create the database
 CREATE DATABASE your_database_name DEFAULT CHARSET utf8mb4;
 # ------------
-4.A3.Edit Database Config: Open TradePlatform/settings.py and update the DATABASES block with your MySQL credentials:
+4.A3. Edit Database Config: Open `TradePlatform/settings.py` and update the `DATABASES` block with your MySQL credentials:
+
+```python
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -56,15 +58,20 @@ DATABASES = {
         }
     }
 }
+``` 
 
 # Option B: Use SQLite3 (Simpler for Testing, No MySQL Required)
-Skip steps 4.A.1–4.A.3, and replace the entire DATABASES block in TradePlatform/settings.py with:
+Skip steps 4.A.1-4.A.3, and replace the entire DATABASES block in TradePlatform/settings.py with:
+
+```python
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+```
+
 SQLite3 will automatically create a database file when you run migrations.
 
 # 5.Database Migration
