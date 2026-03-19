@@ -1,8 +1,12 @@
+# How to use the administrator function
+# stepA, create createsuperuser 
 When creating a database locally, you must first create a super administrator. 
 Then log in to the login page using the super administrator account. 
 Add "/admin" at the end of the URL. After that, you can enter the backend management. 
+# stepB, Set the normal administrator
 You need to create a new user, set it as an administrator on the super administrator page, 
 and then log in with the newly created administrator account. 
+On the user end of these ordinary administrators, a link to the backend administrator end will appear.
 You will be able to normally access the management backend link.
 Cross-Border Trade Service Platform Project README
 
@@ -77,6 +81,7 @@ python manage.py migrate
 
 # 6. Create a Super Administrator
 # You will use this account to log in at http://127.0.0.1:8000/admin/.
+
 python manage.py createsuperuser
 
 # 7.Start the Project
