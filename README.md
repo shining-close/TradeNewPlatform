@@ -13,18 +13,13 @@ Python 3.10+
 Django 6.0.3
 MySQL 8.0+ (or a compatible database)
 
-Runtime Environment Requirements
-Python 3.10+
-Django 6.0.3
-MySQL 8.0+ (or a compatible database)
-
 Quick Start Steps
 # 1. Clone / Download the Project
-Extract the project code to a local directory and enter the project root directory:
+# Extract the project code to a local directory and enter the project root directory:
 cd TradePlatformProject
 
 # 2. Create & Activate Virtual Environment (Recommended)
-Isolate project dependencies to avoid conflicts with your global Python environment:
+# Isolate project dependencies to avoid conflicts with your global Python environment:
 # Create virtual environment (Python 3.8+ required)
 python -m venv venv
 # Activate virtual environment
@@ -33,16 +28,17 @@ venv\Scripts\activate
 
 
 # 3.Install Dependencies
-Run the following command to install the required dependency packages:
+# Run the following command to install the required dependency packages:
 pip install -r requirements.txt
 
 # 4. Database Configuration
 # Option A: Use MySQL (Recommended for Production)
-4.A1. Start MySQL Service: Ensure your local MySQL server is running (check via Services on Windows, systemctl status mysql on macOS/Linux).
-4.A2.Create Database: Open your MySQL terminal/tool and run this SQL to create the database
+# 4.A1. Start MySQL Service: Ensure your local MySQL server is running (check via Services on Windows, systemctl status mysql on macOS/Linux).
+# 4.A2.Create Database: Open your MySQL terminal/tool and run this SQL to create the database
+
 CREATE DATABASE your_database_name DEFAULT CHARSET utf8mb4;
-# ------------
-4.A3. Edit Database Config: Open `TradePlatform/settings.py` and update the `DATABASES` block with your MySQL credentials:
+
+# 4.A3. Edit Database Config: Open `TradePlatform/settings.py` and update the `DATABASES` block with your MySQL credentials:
 
 ```python
 DATABASES = {
@@ -61,7 +57,7 @@ DATABASES = {
 ``` 
 
 # Option B: Use SQLite3 (Simpler for Testing, No MySQL Required)
-Skip steps 4.A.1-4.A.3, and replace the entire DATABASES block in TradePlatform/settings.py with:
+# Skip steps 4.A.1-4.A.3, and replace the entire DATABASES block in TradePlatform/settings.py with:
 
 ```python
 DATABASES = {
@@ -71,22 +67,23 @@ DATABASES = {
     }
 }
 ```
-
-SQLite3 will automatically create a database file when you run migrations.
+# SQLite3 will automatically create a database file when you run migrations.
 
 # 5.Database Migration
-Run the following commands to create database table structures:
+# Run the following commands to create database table structures:
 python manage.py makemigrations
+# ---------
 python manage.py migrate
 
 # 6. Create a Super Administrator
-You will use this account to log in at http://127.0.0.1:8000/admin/.
+# You will use this account to log in at http://127.0.0.1:8000/admin/.
 python manage.py createsuperuser
 
 # 7.Start the Project
-After successful startup, visit the address: http://127.0.0.1:8000/
+# After successful startup, visit the address: http://127.0.0.1:8000/
 python manage.py runserver
 
+# --------------------------------
 Test Accounts (for functional verification)
 Administrator: Manage all user, order, and logistics data
 Enterprise User: Publish, edit, view, and favorite their own orders
