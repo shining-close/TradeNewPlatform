@@ -77,14 +77,11 @@ WSGI_APPLICATION = "TradeNewPlatForm.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'trade_platform',  # Database name (need to create manually)
-        'USER': 'root',  # Database username
-        'PASSWORD': 'AEAEAEEOO',  # Database password
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4'
-        }
+        'NAME': os.environ.get('DB_NAME', 'trade_platform'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
     }
 }
 
